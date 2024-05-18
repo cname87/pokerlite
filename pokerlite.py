@@ -8,65 +8,183 @@ Version: 1.0
 """
 
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from typing import Optional, TypedDict
 from datetime import datetime
 import random
 
 # Import pokerlite elements
-import configuration
-from configuration import logging
+from configuration import GameConfig, GAME_CONFIG, logging
 from components import Deck
-from player import GAME_CONFIG, Game_Record, Player, Round_Record
+from player import Game_Record, Player, Round_Record
 from utilities import print_records
 
 # Import the players' code
-from player1 import Game as Game1
-from player2 import Game as Game2
-from player3 import Game as Game3
-from player4 import Game as Game4
+from player1 import Player1 as Player1
+from player2 import Player2 as Player2
+from player3 import Player3 as Player3
+from player4 import Player4 as Player4
 
 
 # Custom type
 bet_players_dict_type = TypedDict('bet_players_dict_type', {'Total Bet': int, 'Remaining Players': list[Player]})
 
-class PokerLite:
+
+class State(ABC):
+
+    @property
+    def game(self) -> Game:
+        return self._game
+
+    @game.setter
+    def game(self, game: Game) -> None:
+        self._game = game
+
+    @property
+    def player_order(self) -> list[Player]:
+        return self._player_order
+
+    @player_order.setter
+    def player_order(self, player_order: list[Player]) -> None:
+        self._player_order = player_order
+
+    @property
+    def active_player_index(self) -> int:
+        return self._active_player_index
+
+    @active_player_index.setter
+    def active_player_index(self, active_player_index: int) -> None:
+        self._active_player_index = active_player_index
+
+    def __init__(self, player_order: list[Player], active_player_index: int) -> None:
+        self._player_order = player_order
+        self._active_player_index = active_player_index
+
+    @abstractmethod
+    def take_bet(
+        self,
+        pot: int,   
+        required_bet: int,
+        round_data: list[Round_Record],
+        game_config: GameConfig,
+        is_raise_allowed: bool = True,
+    ) -> int:
+        pass
+
+class AnteState(State):
+    
+    def __init__(self, player_order: list[Player], active_player_index: int) -> None:
+        super().__init__(player_order, active_player_index)
+    
+    def take_bet(
+        self,
+        pot: int,   
+        required_bet: int,
+        round_data: list[Round_Record],
+        game_config: GameConfig,
+        is_raise_allowed: bool = True,
+    ) -> int:
+        bet = self.player_order[self.active_player_index].take_bet(
+            pot,
+            required_bet, 
+            round_data,
+            game_config,
+            is_raise_allowed
+        )
+        next_player_index = self.active_player_index + 1
+        if bet == 0:
+            self.game.set_game_state(OpeningCheckState(self.player_order, next_player_index))
+        else:
+            self.game.set_game_state(OpeningBetState(self.player_order, next_player_index))
+        return bet
+
+class OpeningCheckState(State):
+    
+    def __init__(self, player_order: list[Player], active_player_index: int) -> None:
+        super().__init__(player_order, active_player_index)
+    
+    def take_bet(
+        self,
+        pot: int,   
+        required_bet: int,
+        round_data: list[Round_Record],
+        game_config: GameConfig,
+        is_raise_allowed: bool = True,
+    ) -> int:
+        bet = self.player_order[self.active_player_index].take_bet(
+            pot,
+            required_bet, 
+            round_data,
+            game_config,
+            is_raise_allowed
+        )
+        # self.game.set_game_state(A
+        return bet
+
+
+class OpeningBetState(State):
+    
+    def __init__(self, player_order: list[Player], active_player_index: int) -> None:
+        super().__init__(player_order, active_player_index)
+    
+    def take_bet(
+        self,
+        pot: int,   
+        required_bet: int,
+        round_data: list[Round_Record],
+        game_config: GameConfig,
+        is_raise_allowed: bool = True,
+    ) -> int:
+        bet = self.player_order[self.active_player_index].take_bet(
+            pot,
+            required_bet, 
+            round_data,
+            game_config,
+            is_raise_allowed
+        )
+        next_player_index = self.active_player_index + 1
+        if bet == 0:
+            self.game.set_game_state(AnteState(self.player_order, next_player_index))
+        else:
+            self.game.set_game_state(AnteState(self.player_order, next_player_index))
+        return bet
+
+class Game:
     """
     Runs a betting game.
     See configuration.py for game rules.
     """
+    
     def __init__(
         self,
         game_id: str,
-        NUMBER_PLAYERS: int = configuration.NUMBER_PLAYERS,
-        players: list[Player] = [Game1(), Game2(), Game3(), Game4()],
-        NUMBER_ROUNDS: int = configuration.NUMBER_ROUNDS,
-        OPENERS: int = configuration.OPENERS,
-        MIN_BET_OR_RAISE: int = configuration.MIN_BET_OR_RAISE,
-        MAX_BET_OR_RAISE:int = configuration.MAX_BET_OR_RAISE,
-        CARD_HIGH_NUMBER: int = configuration.HIGH_NUMBER,
-        MAX_RAISES: int = configuration.MAX_RAISES
+        players: list[Player] = [Player1(), Player2(), Player3(), Player4()],
+        GAME_CONFIG: GameConfig = GAME_CONFIG
     ) -> None:
         self.game_id = game_id
-        if not NUMBER_PLAYERS > 1 and NUMBER_PLAYERS <5:
+        if not GAME_CONFIG["NUMBER_PLAYERS"] > 1 and GAME_CONFIG["NUMBER_PLAYERS"] < 5:
             raise ValueError("The number of players must be between 2 and 4")
-        self.players = players[:NUMBER_PLAYERS]
+        self.players = players[:GAME_CONFIG["NUMBER_PLAYERS"]]
         # Store game configuration data
-        self.NUMBER_ROUNDS = NUMBER_ROUNDS
-        self.OPENERS = OPENERS
-        self.MIN_BET_OR_RAISE = MIN_BET_OR_RAISE
-        self.MAX_BET_OR_RAISE = MAX_BET_OR_RAISE
-        self.CARD_HIGH_NUMBER = CARD_HIGH_NUMBER
-        self.MAX_RAISES = MAX_RAISES
+        self.GAME_CONFIG = GAME_CONFIG
+        self.NUMBER_ROUNDS = GAME_CONFIG["NUMBER_ROUNDS"]
+        self.ANTE_BET = GAME_CONFIG["ANTE_BET"]
+        self.MIN_BET_OR_RAISE = GAME_CONFIG["MIN_BET_OR_RAISE"]
+        self.MAX_BET_OR_RAISE = GAME_CONFIG["MAX_BET_OR_RAISE"]
+        self.CARD_HIGH_NUMBER = GAME_CONFIG["CARD_HIGH_NUMBER"]
+        self.MAX_RAISES = GAME_CONFIG["MAX_RAISES"]
         self.game_records: list[Game_Record] = []
-        self.GAME_CONFIG: GAME_CONFIG = {
-            'number_players': NUMBER_PLAYERS,
-            'number_rounds': NUMBER_ROUNDS,
-            'card_high_number': CARD_HIGH_NUMBER,
-            'min_bet_or_raise': MIN_BET_OR_RAISE,
-            'max_bet_or_raise': MAX_BET_OR_RAISE,
-            'max_raises': MAX_RAISES,
-            'openers': OPENERS,   
-        }
+
+    # Changes the game state
+    def set_game_state(self, state: State):
+        self._state = state
+        self._state.game = self
+
+    # Prints the current game state depending on logging level
+    def print_state(self):
+        if logging.getLogger().getEffectiveLevel() == logging.DEBUG:
+            print(f"The game state is {type(self._state).__name__}")
+            print(f"The active player name is {self._state.player_order[self._state.active_player_index]}")
 
     def player_order(self, start_player: Optional[Player] = None) -> list[Player]:
         """Rotate player order so that start_player goes first"""
@@ -136,10 +254,12 @@ class PokerLite:
                 # and to allow the closing player be reset if the player raises
                 betting_player_index = next((i for i, player in enumerate(player_order) if betting_player.name == player.name))
                 # The required bet for the current betting player is the highest cumulative bet placed so far
-                # less the amount the betting player has already bet 
+                # less the amount the betting player has already bet
                 required_bet = highest_cumulative_bet - betting_player.bet_running_total
-                # Ask the player for a bet
-                bet = betting_player.take_bet(
+                # Set the game state to the opening state with the betting player active
+                self.set_game_state(AnteState(player_order, betting_player_index))
+                # Ask the player for a bet         
+                bet = self._state.take_bet(
                     pot=pot,
                     required_bet=required_bet, 
                     round_data=round_data,
@@ -271,11 +391,11 @@ class PokerLite:
         # The deal is a set of random numbers, one for each player
         deal = deck.deal(len(player_order))
 
-        logging.debug("Taking the openers...")
+        logging.debug("Taking the ANTE_BET...")
         for i in range(0, len(player_order)):
             
             # Deduct the opener from each player
-            player_order[i].place_bet(self.OPENERS)
+            player_order[i].place_bet(self.ANTE_BET)
             logging.debug(f"Player {player_order[i].name} balance is: {player_order[i].cash_balance} coins")
             
             self.game_records.append({
@@ -283,7 +403,7 @@ class PokerLite:
                 'Round_Number': round_number,
                 'Description': "Ante",
                 'Player': player_order[i].name,
-                'Value': self.OPENERS
+                'Value': self.ANTE_BET
             })
 
             # Deal a number card to each player
@@ -297,7 +417,7 @@ class PokerLite:
                 'Value': player_order[i].card.value
             })
 
-        pot = pot + len(player_order) * self.OPENERS
+        pot = pot + len(player_order) * self.ANTE_BET
         logging.debug(f"The pot is: {pot} coins")
 
         # Take the bets 
@@ -360,7 +480,7 @@ class PokerLite:
 
 if __name__ == '__main__':
     game_id: str = datetime.now().strftime("%d-%b-%Y %H:%M:%S")
-    game = PokerLite(game_id)
+    game = Game(game_id)
     game.play()
     if logging.getLogger().getEffectiveLevel() == logging.DEBUG:
-        print_records(game.game_records)
+       print_records(game.game_records)

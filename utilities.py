@@ -7,13 +7,13 @@ Author: Seán Young
 
 from typing import Any
 from collections import defaultdict
-from player import GAME_CONFIG
+from configuration import GameConfig
 
 # Utility function to validate bets
 def validate_bet(
     required_bet: int,
     bet: int,
-    game_config: GAME_CONFIG,
+    game_config: GameConfig,
     is_raise_allowed: bool
 ) -> None:
     """
@@ -23,10 +23,10 @@ def validate_bet(
         raise ValueError("The bet does not meet the minimum required value to see the incoming bet")
     if bet > required_bet and is_raise_allowed != True:
         raise ValueError("The bet is a raise which is disallowed")
-    if required_bet == 0 and bet != 0 and (bet < game_config['min_bet_or_raise'] or bet > game_config['max_bet_or_raise']):
+    if required_bet == 0 and bet != 0 and (bet < game_config['MIN_BET_OR_RAISE'] or bet > game_config['MAX_BET_OR_RAISE']):
         raise ValueError("The opening bet was outside the game bet limits")
     if required_bet > 0 and bet != 0 and bet != required_bet \
-    and (bet - required_bet < game_config['min_bet_or_raise'] or bet - required_bet > game_config['max_bet_or_raise']):
+    and (bet - required_bet < game_config['MIN_BET_OR_RAISE'] or bet - required_bet > game_config['MAX_BET_OR_RAISE']):
         raise ValueError("A raise bet was outside the game bet limits")
 
 # Utility function to print list fo records of type Round_Record,Game_Record
