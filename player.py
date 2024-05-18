@@ -9,6 +9,7 @@ from __future__ import annotations
 from components import Card
 from typing import TypedDict
 from abc import ABC, abstractmethod
+from configuration import GameConfig
 
 # Define type for a record of activity in a game
 class Game_Record(TypedDict):
@@ -27,17 +28,6 @@ class Round_Record(TypedDict):
     player: str
     bet: int
 round_records: list[Round_Record] = []
-
-# Define type for passing game configuration data
-class GAME_CONFIG(TypedDict):
-    number_players: int  # Number of betting players
-    number_rounds: int  # The game consists of this many betting rounds
-    card_high_number: int  # Each player gets a card with a number between 1 and this value 
-    min_bet_or_raise: int  # Minimum opening bet, also minimum raise bet, (i.e., amount above that required to see the previous bet
-    max_bet_or_raise: int  # Maximum opening bet, also maximum raise bet, (i.e., amount above that required to see the previous bet
-    max_raises: int  # Number of raises allowed, with the opening bet counted as a raise
-    openers: int  # Ante amount paid into the pot by each player
-
 
 class Player(ABC):
     """
@@ -87,14 +77,13 @@ class Player(ABC):
     def game_stats(self, stats: list[Game_Record]):
         self._game_stats = stats
 
-
     @abstractmethod
     def take_bet(
         self,
         pot: int,   
         required_bet: int,
         round_data: list[Round_Record],
-        game_config: GAME_CONFIG,
+        game_config: GameConfig,
         is_raise_allowed: bool = True,
     ) -> int:
         """

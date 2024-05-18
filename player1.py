@@ -9,21 +9,22 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(levelname)s:%(module)s:%(funcName)s:%(message)s', level=logging.INFO)
 
-from player import Player, GAME_CONFIG, Round_Record
+from configuration import GameConfig
+from player import Player, Round_Record
 from utilities import validate_bet
 
-class Game(Player):
+class Player1(Player):
     
     @property
     def name(self) -> str:
-        return "player_2"
+        return "player_1"
 
     def take_bet(
             self,
             pot: int,
             required_bet: int,
             round_data: list[Round_Record],
-            game_config: GAME_CONFIG,
+            game_config: GameConfig,
             is_raise_allowed: bool = True,
         ) -> int:
         
@@ -35,14 +36,14 @@ class Game(Player):
                     case n if n < 4:
                         bet = 0 # Check
                     case _: 
-                        bet = game_config['max_bet_or_raise']
+                        bet = game_config['MAX_BET_OR_RAISE']
             else:
                 match(self.card.value):
                     case n if n < 4:
                         bet = 0 # fold
                     case _: 
                         if is_raise_allowed:
-                            bet: int = required_bet + game_config['max_bet_or_raise'] # raise    
+                            bet: int = required_bet + game_config['MAX_BET_OR_RAISE'] # raise    
                         else:
                             bet = required_bet # see
 
