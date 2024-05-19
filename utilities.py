@@ -20,14 +20,14 @@ def validate_bet(
     A utility function hat validates a player bet.
     """
     if bet != 0 and bet < required_bet:
-        raise ValueError("The bet does not meet the minimum required value to see the incoming bet")
+        raise ValueError(f"The bet of {bet} does not meet the required bet {required_bet} to see the incoming bet")
     if bet > required_bet and is_raise_allowed != True:
-        raise ValueError("The bet is a raise which is disallowed")
+        raise ValueError(f"The bet of {bet} is a raise above {required_bet} which is disallowed")
     if required_bet == 0 and bet != 0 and (bet < game_config['MIN_BET_OR_RAISE'] or bet > game_config['MAX_BET_OR_RAISE']):
-        raise ValueError("The opening bet was outside the game bet limits")
+        raise ValueError(f"The opening bet of {bet} was outside the min {game_config['MIN_BET_OR_RAISE']} or max {game_config['MAX_BET_OR_RAISE']} bet limits")
     if required_bet > 0 and bet != 0 and bet != required_bet \
     and (bet - required_bet < game_config['MIN_BET_OR_RAISE'] or bet - required_bet > game_config['MAX_BET_OR_RAISE']):
-        raise ValueError("A raise bet was outside the game bet limits")
+        raise ValueError(f"The difference between the bet of {bet} and the required bet {required_bet} was outside the min {game_config['MIN_BET_OR_RAISE']} or max {game_config['MAX_BET_OR_RAISE']} bet limits")
 
 # Utility function to print list fo records of type Round_Record,Game_Record
 def print_records(record_list: list[Any]) -> None:

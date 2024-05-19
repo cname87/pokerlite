@@ -5,28 +5,12 @@ This module holds the definition of the player class for the pokerlite program.
 Author: Seán Young
 """
 
-from __future__ import annotations
 from components import Card
-from typing import TypedDict
 from abc import ABC, abstractmethod
-from configuration import GameConfig
+from configuration import GameConfig, Round_Record, Game_Record
 
-# Define type for a record of activity in a game
-class Game_Record(TypedDict):
-    Game_Id: str
-    Round_Number: int
-    Description: str
-    Player: str
-    Value: int
+
 game_records: list[Game_Record] = []
-
-# Define type for a record of betting activity in a round
-class Round_Record(TypedDict):
-    round_number: int
-    starting_pot: int
-    bet_type: str
-    player: str
-    bet: int
 round_records: list[Round_Record] = []
 
 class Player(ABC):
