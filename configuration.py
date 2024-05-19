@@ -5,12 +5,14 @@ This module holds the configuration for the Pokerlite program.
 Author: Seán Young
 """
 
-from typing import TypedDict
+from __future__ import annotations
+from typing import TypedDict, TYPE_CHECKING
+if TYPE_CHECKING:
+    from player import Player
 
 import logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(levelname)s:%(module)s:%(funcName)s:%(message)s', level=logging.INFO)
-
+logging.basicConfig(format='%(levelname)s:%(module)s:%(funcName)s:%(message)s', level=logging.DEBUG)
 
 
 # Define type for passing game configuration data
@@ -26,7 +28,7 @@ class GameConfig(TypedDict):
 #############################################
 # Set the main game class initialization variables
 NUMBER_PLAYERS: int = 2
-NUMBER_ROUNDS: int = 1000
+NUMBER_ROUNDS: int = 2
 CARD_HIGH_NUMBER = 10
 ANTE_BET: int = 10
 MIN_BET_OR_RAISE: int = 1 * ANTE_BET
@@ -44,3 +46,32 @@ GAME_CONFIG: GameConfig = {
     'MAX_BET_OR_RAISE': MAX_BET_OR_RAISE,
     'MAX_RAISES': MAX_RAISES
 }
+
+
+# Define type for a record of betting activity in a round
+class Round_Record(TypedDict):
+    Round_Number: int
+    Pot: int
+    Bet_Type: str
+    Player: str
+    Bet: int
+
+# Define type for a record of activity in a game
+class Game_Record(TypedDict):
+    Game_Id: str
+    Round_Number: int
+    Description: str
+    Player: str
+    Value: int
+
+class BettingState(TypedDict):    
+    player_order: list[Player]
+    betting_player_index: int
+    closing_player_index: int
+    pot: int
+    highest_cumulative_bet: int
+    number_raises: int
+    max_number_raises: int
+    bet_type: str
+    bet: int
+    round_data: list[Round_Record]

@@ -1,0 +1,161 @@
+
+
+class State(ABC):
+
+    @property
+    def game(self) -> Game:
+        return self._game
+
+    @game.setter
+    def game(self, game: Game) -> None:
+        self._game = game
+
+    @property
+    def betting_state(self) -> BettingState:
+        return self._betting_state
+
+    @betting_state.setter
+    def betting_state(self, betting_state: BettingState) -> None:
+        self._betting_state = betting_state
+
+    def __init__(self, betting_state: BettingState) -> None:
+        self._betting_state = betting_state
+
+    @abstractmethod
+    def take_bet(
+        self,
+        pot: int,   
+        required_bet: int,
+        round_data: list[Round_Record],
+        game_config: GameConfig,
+        is_raise_allowed: bool = True,
+    ) -> int:
+        pass
+
+class AnteState(State):
+    
+    def __init__(self, betting_state: BettingState) -> None:
+        super().__init__(betting_state)
+    
+    def take_bet(
+        self,
+        pot: int,   
+        required_bet: int,
+        round_data: list[Round_Record],
+        game_config: GameConfig,
+        is_raise_allowed: bool = True,
+    ) -> int:
+        bet = self.betting_state['player_order'][self.betting_state['betting_player_index']].take_bet(
+            pot,
+            required_bet, 
+            round_data,
+            game_config,
+            is_raise_allowed
+        )
+        if bet == 0:
+            # Player checks
+            self.game.set_game_state(CheckState(self.betting_state))
+        else:
+            # Player bets
+            self.game.set_game_state(OpeningBetState(self.betting_state))
+        return bet
+
+class CheckState(State):
+    
+    """ The opening player checks, not laying a bet """
+    
+    def __init__(self, betting_state: BettingState) -> None:
+        super().__init__(betting_state)
+    
+    def take_bet(
+        self,
+        pot: int,   
+        required_bet: int,
+        round_data: list[Round_Record],
+        game_config: GameConfig,
+        is_raise_allowed: bool = True,
+    ) -> int:
+        bet = self.betting_state['player_order'][self.betting_state['betting_player_index']].take_bet(
+            pot,
+            required_bet, 
+            round_data,
+            game_config,
+            is_raise_allowed
+        )
+        if bet == 0:
+            # Player also checks
+            self.game.set_game_state(ClosingState(self.betting_state))
+        else:
+            # Player bets
+            self.game.set_game_state(OpeningBetState(self.betting_state))
+        return bet
+
+class OpeningBetState(State):
+    
+    """ The previous opening player lays a bet """
+    
+    def __init__(self, betting_state: BettingState) -> None:
+        super().__init__(betting_state)
+    
+    def take_bet(
+        self,
+        pot: int,   
+        required_bet: int,
+        round_data: list[Round_Record],
+        game_config: GameConfig,
+        is_raise_allowed: bool = True,
+    ) -> int:
+        bet = self.betting_state['player_order'][self.betting_state['betting_player_index']].take_bet(
+            pot,
+            required_bet, 
+            round_data,
+            game_config,
+            is_raise_allowed
+        )
+        if bet == 0:
+            # Player folds
+            self.game.set_game_state(ClosingState(self.betting_state))
+        elif bet == required_bet:
+            # Player sees the bet
+            self.game.set_game_state(ClosingState(self.betting_state))
+        elif bet > required_bet:
+            # Player raises
+            self.game.set_game_state(OpeningBetState(self.betting_state))
+        else:
+            raise ValueError("Invalid bet placed") 
+        return bet
+
+class ClosingState(State):
+    
+    """ Closes the betting round """
+    
+    def __init__(self, betting_state: BettingState) -> None:
+        super().__init__(betting_state)
+    
+    # Dummy implementation
+    def take_bet(
+        self,
+        pot: int,   
+        required_bet: int,
+        round_data: list[Round_Record],
+        game_config: GameConfig,
+        is_raise_allowed: bool = True,
+    ) -> int:
+        return 0
+
+#In Game class...
+
+    # Changes the game state
+    def set_game_state(self, state: State):
+        self._state = state
+        self._state.game = self
+
+    # Prints the current game state depending on logging level
+    def print_state(self):
+        if logging.getLogger().getEffectiveLevel() == logging.DEBUG:
+            print(f"The game state is {type(self._state).__name__}")
+            print(f"The active player name is {self._state.betting_state['player_order'][self._state.betting_state['betting_player_index']]}")
+            
+# In betting round
+                # Set the game state to the opening state with the betting player active
+                self.set_game_state(AnteState(betting_state))
