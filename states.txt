@@ -159,3 +159,16 @@ class ClosingState(State):
 # In betting round
                 # Set the game state to the opening state with the betting player active
                 self.set_game_state(AnteState(betting_state))
+
+
+class BettingState(TypedDict):    
+    player_order: list[Player]
+    betting_player_index: int
+    closing_player_index: int
+    pot: int
+    highest_cumulative_bet: int
+    number_raises: int
+    max_number_raises: int
+    bet_type: str
+    bet: int
+    round_data: list[RoundRecord]
