@@ -9,13 +9,13 @@ import random
 
 import logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(levelname)s:%(module)s:%(funcName)s:%(message)s', level=logging.INFO)
+logging.basicConfig(format="%(levelname)s:%(module)s:%(funcName)s:%(message)s", level=logging.INFO)
 
 from configuration import GameConfig
-from player import Player, Round_Record
+from player import Player, RoundRecord
 from utilities import validate_bet
 
-class Player4(Player):
+class Player_Code(Player):
     
     @property
     def name(self) -> str:
@@ -23,14 +23,14 @@ class Player4(Player):
 
     def take_bet(
             self,
-            pot: int,
             required_bet: int,
-            round_data: list[Round_Record],
+            pot: int,
+            round_data: list[RoundRecord],
             game_config: GameConfig,
             is_raise_allowed: bool = True,
         ) -> int:
         
-            logging.debug(f"Received game stats, game id is: {self.game_stats[0]['Game_Id']}")
+            logging.debug(f"Received game stats, game id is: {self.game_stats[0]["Game_Id"]}")
 
             bet: int = 0
             if required_bet == 0: # opening bet
@@ -39,7 +39,7 @@ class Player4(Player):
                     case 1: # 50%
                         bet = 0 # Check
                     case _: # 50%
-                        bet = random.randint(game_config['MIN_BET_OR_RAISE'], game_config['MAX_BET_OR_RAISE']) # Opening bet
+                        bet = random.randint(game_config["MIN_BET_OR_RAISE"], game_config["MAX_BET_OR_RAISE"]) # Opening bet
             else:
                 random_play = random.randint(1, 10)
                 match(random_play):
@@ -49,7 +49,7 @@ class Player4(Player):
                         bet = required_bet # see
                     case _: # 50%
                         if is_raise_allowed:
-                            bet: int = required_bet + random.randint(game_config['MIN_BET_OR_RAISE'], game_config['MAX_BET_OR_RAISE']) # raise    
+                            bet: int = required_bet + random.randint(game_config["MIN_BET_OR_RAISE"], game_config["MAX_BET_OR_RAISE"]) # raise    
                         else:
                             bet = required_bet # see
 

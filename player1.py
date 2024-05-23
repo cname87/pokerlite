@@ -1,19 +1,17 @@
 #!/usr/bin/env python
 
 """
-This player strategy is more aggressive - bet when the card is greater than 3, and then bet the maximum.
+This player strategy is nuanced
 Author: Seán Young
 """
 
 import logging
-logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(levelname)s:%(module)s:%(funcName)s:%(message)s', level=logging.INFO)
 
-from configuration import GameConfig
-from player import Player, Round_Record
-from utilities import validate_bet
+from configuration import GameConfig, TypeForPlayState
+from player import Player, RoundRecord
+from utilities import validate_bet, round_state, straight_bet_likely_outcome, one_step_bet_likely_outcome, print_records
 
-class Player1(Player):
+class Player_Code(Player):
     
     @property
     def name(self) -> str:
@@ -21,31 +19,50 @@ class Player1(Player):
 
     def take_bet(
             self,
-            pot: int,
             required_bet: int,
-            round_data: list[Round_Record],
+            pot: int,
+            round_data: list[RoundRecord],
             game_config: GameConfig,
             is_raise_allowed: bool = True,
         ) -> int:
-        
-            logging.debug(f"Received game stats, game id is: {self.game_stats[0]['Game_Id']}")
+
+            self.logger.debug(f"{self.name} has been asked for a bet")
+            
+            play_state: TypeForPlayState = round_state(round_data, self.name) 
+            if self.logger.getEffectiveLevel() == logging.DEBUG:
+                print(f"{self.name} round data:")
+                print_records(round_data)
+                print(f"{self.name} bet state: {play_state}")
+                print(f"{self.name} game data:")
+                print_records(self.game_stats)
 
             bet: int = 0
-            if required_bet == 0: # opening bet
-                match(self.card.value):
-                    case n if n < 4:
-                        bet = 0 # Check
-                    case _: 
-                        bet = game_config['MAX_BET_OR_RAISE']
-            else:
-                match(self.card.value):
-                    case n if n < 4:
-                        bet = 0 # fold
-                    case _: 
-                        if is_raise_allowed:
-                            bet: int = required_bet + game_config['MAX_BET_OR_RAISE'] # raise    
-                        else:
-                            bet = required_bet # see
+            match(play_state):
+                case("Opening Play"):
+                    if one_step_bet_likely_outcome(self.card.value, pot, game_config["MAX_BET_OR_RAISE"]) > 0:
+                        bet = game_config["MAX_BET_OR_RAISE"] # Bet
+                    elif  one_step_bet_likely_outcome(self.card.value, pot, game_config["MIN_BET_OR_RAISE"]) > 0:
+                        bet = game_config["MIN_BET_OR_RAISE"] # Bet
+                    else:
+                        bet = 0 # Fold
+                case("Checked Play"):
+                    if one_step_bet_likely_outcome(self.card.value, pot, game_config["MAX_BET_OR_RAISE"]) > 0:
+                        bet = game_config["MAX_BET_OR_RAISE"] # Bet
+                    elif  one_step_bet_likely_outcome(self.card.value, pot, game_config["MIN_BET_OR_RAISE"]) > 0:
+                        bet = game_config["MIN_BET_OR_RAISE"] # Bet
+                    else:
+                        bet = 0 # Fold
+                case("First Bet Play"):
+                    if straight_bet_likely_outcome(self.card.value, pot, required_bet) > 0:
+                        bet = required_bet # See
+                    else:
+                        bet = 0 # Fold
+                case("Raise Play"):
+                    if straight_bet_likely_outcome(self.card.value, pot, required_bet) > 0:
+                        bet = required_bet # See
+                    else:
+                        bet = 0 # Fold
+
 
             validate_bet(required_bet, bet, game_config, is_raise_allowed)
 
