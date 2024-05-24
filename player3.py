@@ -9,9 +9,9 @@ import logging
 
 from configuration import GameConfig, TypeForPlayState
 from player import Player, RoundRecord
-from utilities import validate_bet, round_state, straight_bet_likely_outcome, print_records
+from utilities import validate_bet, round_state, print_records
 
-class Player_Code(Player):
+class PlayerCode(Player):
     
     @property
     def name(self) -> str:
@@ -71,7 +71,7 @@ class Player_Code(Player):
                             else:              
                                 bet = required_bet + game_config["MAX_BET_OR_RAISE"] # Raise    
                         else:
-                            if straight_bet_likely_outcome(self.card.value, pot, required_bet) > 0:
+                            if self.card.value > 5:
                                 bet = required_bet # See
                             else:
                                 bet = 0 # Fold

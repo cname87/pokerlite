@@ -80,66 +80,129 @@ def round_state(round_data: list[RoundRecord], player_name: str) -> TypeForPlayS
         return "Raise Play"
     
     
-def straight_bet_likely_outcome(
-    card_number: int,
+def second_bet(
     pot: int,
-    required_bet: int
-) -> float:
+    required_bet: int,
+    other_player_bets: list[int] = [],
+) -> list[int]:
       
     """
-        Calculates the average outcome when the player has the simple choice to see a required_bet or not.
+        Returns a list of the card numbers that the player should bet on, when the player has the choice to see a required bet or fold.
+        The result is dependent on an estimate of the other player's betting strategy.
         
         Args:
-            card_number: int: The number of the player's card.
             pot: int: The value of the pot before the bet is made.
             required_bet: int: The bet that the player must make.
+            other_player_bets: list[int]: An estimated list of the card numbers that the other player has bet, and not checked.
 
         Returns:
-            float: The average win or loss per bet.
+            list[int]: A list of card numbers for which the player should bet on.
     """
-    
-    player_win_prob = (card_number - 1) / (CARD_HIGH_NUMBER - 1)
-    win_reward = pot + required_bet
-    loss_cost = required_bet
-    likely_outcome = (player_win_prob * win_reward) - ((1-player_win_prob) * loss_cost) 
-    return likely_outcome
 
-def one_step_bet_likely_outcome(
-    card_number: int,
+    # An estimated list of the cards for which the other player has bet and not checked 
+    if other_player_bets == []:
+        other_player_bets = opening_bet(pot, required_bet)
+
+    bet_cards: list[int] = []
+    for card in range(1, CARD_HIGH_NUMBER + 1):
+        winnings: int = 0
+        cost = 0
+        # Run through all the cards the other player could hold
+        for other_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != card]:    
+            if other_card not in other_player_bets: # Other player checks
+                winnings += pot
+            else: # Other player bets
+                if card > other_card: # Player wins
+                    winnings += pot + required_bet
+                else:
+                    cost += required_bet
+        if (winnings - cost) >= 0: # Bet if return is zero, or greater
+            bet_cards.append(card)
+    return bet_cards
+
+def opening_bet(
     pot: int,
-    required_bet: int
-) -> float:
+    required_bet: int,
+    other_player_bets: list[int] = [],
+) -> list[int]:
       
     """
-        Calculates the average outcome when the player makes a bet and the opposing player can decide to fold or see the bet.
+        Returns a list of the card numbers that the player should bet on, when the player has the choice to open or to fold.
+        The result is dependent on an estimate of the other player's betting strategy.
         
         Args:
-            card_number: int: The number of the player's card.
             pot: int: The value of the pot before the bet is made.
-            required_bet: int: The bet that must be seen by the opposing plyer.
+            required_bet: int: The bet that the player must make.
+            other_player_bets: list[int]: An estimated list of the card numbers that the other player will bet, and not fold.
 
         Returns:
-            float: The average win or loss per bet.
+            list[int]: A list of card numbers for which the player should bet on.
     """
 
-    winnings: int = 0
-    cost = 0
-    # Run through all the cards the other player could hold
-    for other_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != card_number]:
-        # The average return of the other player
-        other_player_odds = straight_bet_likely_outcome(other_card, pot, required_bet)
-        if other_player_odds < 0: # Fold
-            winnings += pot
-        else: # Sees
-            if card_number > other_card: # Player wins
-                winnings += pot + required_bet
-            else:
-                cost += required_bet
-        # print(f"Other Card {i} : {straight_bet_likely_outcome(i, 40, 100)}")
-    return (winnings - cost) / (CARD_HIGH_NUMBER - 1)
+    # An estimated list of the cards for which the other player will bet and not fold
+    if other_player_bets == []:
+        other_player_bets = second_bet(pot, required_bet)
+    
+    bet_cards: list[int] = []
+    for card in range(1, CARD_HIGH_NUMBER + 1):
+        winnings: int = 0
+        cost = 0
+        # Run through all the cards the other player could hold
+        for other_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != card]:
+            if other_card not in other_player_bets: # Other player folds
+                winnings += pot
+            else: # Other player sees
+                if card > other_card: # Player wins
+                    winnings += pot + required_bet
+                else:
+                    cost += required_bet
+        if (winnings - cost) >= 0: # Bet if return is zero, or greater
+            bet_cards.append(card)
+    return bet_cards
 
-# for i in range(1, CARD_HIGH_NUMBER + 1):
-#     print(f"Player Card {i} : {straight_bet_likely_outcome(i, 40, 100)}")
+def bet_cards(
+        pot: int,
+        bet: int,
+    ) -> dict[str, list[int]]:
 
-# #for i in range(1, CARD_HIGH_NUMBER + 1):
-#   print(f"Player Card {i} : {one_step_bet_likely_outcome(i, 40, 100)}")
+    # Initial estimate for the cards for which the player will bet in response to the opening bet
+    second_bet_estimate = [i for i in range((CARD_HIGH_NUMBER + 1)//2, CARD_HIGH_NUMBER + 1)]
+
+    opening_bet_result = []
+    second_bet_result = []
+    max_loops = 5
+    while max_loops > 0:
+        # Start with an estimate of the second bet
+        opening_bet_result = opening_bet(
+            pot=pot,
+            required_bet=bet,
+            other_player_bets=second_bet_estimate
+        )
+        second_bet_result = second_bet(
+            pot=pot,
+            required_bet=bet,
+            other_player_bets=opening_bet_result
+        )
+
+        # print(f"Second bet estimate for pot = {pot} and bet = {bet}  : {second_bet_estimate}")
+        # print(f"Second bet interim result for pot = {pot} and bet = {bet}  : {second_bet_result}")
+        
+        # Check if the card decks match
+        if second_bet_result == second_bet_estimate:
+            break
+        
+        # Update the estimate for the second bet
+        second_bet_estimate = second_bet_result
+        
+        max_loops -= 1
+        
+    # print(f"Final opening bet for pot = {pot} and bet = {bet}  : {opening_bet_result}")
+    # print(f"Final second bet for pot = {pot} and bet = {bet}  : {second_bet_result}")
+
+    return {
+        "Opening Bet": opening_bet_result, 
+        "Second Bet": second_bet_result
+    }
+
+
+# bet_cards(20, 100)
