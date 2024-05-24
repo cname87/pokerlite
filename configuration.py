@@ -10,28 +10,36 @@ from typing import Literal, TypedDict
 
 #############################################
 # Set the game configuration parameters here
-NUMBER_PLAYERS: int = 2
-NUMBER_ROUNDS: int = 100
-CARD_HIGH_NUMBER = 9
-ANTE_BET: int = 10
-MIN_BET_OR_RAISE: int = 1 * ANTE_BET
-MAX_BET_OR_RAISE: int = 4 * MIN_BET_OR_RAISE
-MAX_RAISES: int = 0
+ALL_PLAYER_FILES: list[str] = ["player1", "player2", "player3", "player4"] # The file names of all player code files
+CURRENT_PLAYER_FILE_NUMBERS: list[int] = [1, 3]
+PLAYER_CLASS = "PlayerCode" # The name of the class to be defined in each player file 
+NUMBER_ROUNDS: int = 2 # The game consists of this many betting rounds
+CARD_HIGH_NUMBER = 9 # Each player gets a card with a number between 1 and this value
+ANTE_BET: int = 10 # Ante amount paid into the pot at the start of each betting round by each player
+MIN_BET_OR_RAISE: int = 10 * ANTE_BET # Minimum opening bet, also minimum raise bet, (i.e., amount above that required to see the previous bet)
+MAX_BET_OR_RAISE: int = 1 * MIN_BET_OR_RAISE # Maximum opening bet, also maximum raise bet, (i.e., amount above that required to see the previous bet)
+MAX_RAISES: int = 0 # Number of raises allowed
 
 #############################################
 
+current_player_files: list[str] = []
+for i in CURRENT_PLAYER_FILE_NUMBERS:
+    current_player_files.append(ALL_PLAYER_FILES[i])
+
 # Define type for passing game configuration data
 class GameConfig(TypedDict):
-    NUMBER_PLAYERS: int  # Number of betting players
-    NUMBER_ROUNDS: int  # The game consists of this many betting rounds
-    CARD_HIGH_NUMBER: int  # Each player gets a card with a number between 1 and this value
-    ANTE_BET: int  # Ante amount paid into the pot at the start of each betting round by each player
-    MIN_BET_OR_RAISE: int  # Minimum opening bet, also minimum raise bet, (i.e., amount above that required to see the previous bet)
-    MAX_BET_OR_RAISE: int  # Maximum opening bet, also maximum raise bet, (i.e., amount above that required to see the previous bet)
-    MAX_RAISES: int  # Number of raises allowed, with the opening bet counted as a raise
+    PLAYER_FILES: list[str]
+    PLAYER_CLASS: str
+    NUMBER_ROUNDS: int
+    CARD_HIGH_NUMBER: int
+    ANTE_BET: int
+    MIN_BET_OR_RAISE: int
+    MAX_BET_OR_RAISE: int
+    MAX_RAISES: int
 
 GAME_CONFIG: GameConfig = {
-    "NUMBER_PLAYERS": NUMBER_PLAYERS,
+    "PLAYER_FILES": current_player_files,
+    "PLAYER_CLASS": PLAYER_CLASS,
     "NUMBER_ROUNDS": NUMBER_ROUNDS,
     "CARD_HIGH_NUMBER": CARD_HIGH_NUMBER,
     "ANTE_BET": ANTE_BET, 

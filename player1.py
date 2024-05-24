@@ -9,9 +9,9 @@ import logging
 
 from configuration import GameConfig, TypeForPlayState
 from player import Player, RoundRecord
-from utilities import validate_bet, round_state, straight_bet_likely_outcome, one_step_bet_likely_outcome, print_records
+from utilities import validate_bet, round_state, bet_cards, print_records
 
-class Player_Code(Player):
+class PlayerCode(Player):
     
     @property
     def name(self) -> str:
@@ -33,36 +33,33 @@ class Player_Code(Player):
                 print(f"{self.name} round data:")
                 print_records(round_data)
                 print(f"{self.name} bet state: {play_state}")
-                print(f"{self.name} game data:")
-                print_records(self.game_stats)
+                # print(f"{self.name} game data:")
+                # print_records(self.game_stats)
 
             bet: int = 0
+            # other_player_cards = bet_cards(pot, game_config["MIN_BET_OR_RAISE"])["Opening Bet"]
+            # print(other_player_cards)
             match(play_state):
                 case("Opening Play"):
-                    if one_step_bet_likely_outcome(self.card.value, pot, game_config["MAX_BET_OR_RAISE"]) > 0:
-                        bet = game_config["MAX_BET_OR_RAISE"] # Bet
-                    elif  one_step_bet_likely_outcome(self.card.value, pot, game_config["MIN_BET_OR_RAISE"]) > 0:
+                    if self.card.value in bet_cards(pot, game_config["MIN_BET_OR_RAISE"])["Opening Bet"]:
                         bet = game_config["MIN_BET_OR_RAISE"] # Bet
                     else:
                         bet = 0 # Fold
                 case("Checked Play"):
-                    if one_step_bet_likely_outcome(self.card.value, pot, game_config["MAX_BET_OR_RAISE"]) > 0:
-                        bet = game_config["MAX_BET_OR_RAISE"] # Bet
-                    elif  one_step_bet_likely_outcome(self.card.value, pot, game_config["MIN_BET_OR_RAISE"]) > 0:
+                    if self.card.value in bet_cards(pot, game_config["MIN_BET_OR_RAISE"])["Opening Bet"]:
                         bet = game_config["MIN_BET_OR_RAISE"] # Bet
                     else:
                         bet = 0 # Fold
                 case("First Bet Play"):
-                    if straight_bet_likely_outcome(self.card.value, pot, required_bet) > 0:
+                    if self.card.value in bet_cards(pot, game_config["MIN_BET_OR_RAISE"])["Second Bet"]:
                         bet = required_bet # See
                     else:
                         bet = 0 # Fold
                 case("Raise Play"):
-                    if straight_bet_likely_outcome(self.card.value, pot, required_bet) > 0:
+                    if self.card.value in bet_cards(pot, game_config["MIN_BET_OR_RAISE"])["Second Bet"]:
                         bet = required_bet # See
                     else:
                         bet = 0 # Fold
-
 
             validate_bet(required_bet, bet, game_config, is_raise_allowed)
 

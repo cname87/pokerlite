@@ -13,19 +13,13 @@ from datetime import datetime
 import random
 import logging
 import logging.config
+from importlib import import_module
 
 # Import pokerlite elements
 from configuration import GameConfig, GAME_CONFIG, RoundRecord, GameRecord, TypeForBetType
 from components import Deck
 from player import Player
 from utilities import print_records
-
-# Import the players" code
-from player1 import Player_Code as Player1
-from player2 import Player_Code as Player2
-from player3 import Player_Code as Player3
-from player4 import Player_Code as Player4
-
 
 # Custom type
 TypeForRoundReturn = TypedDict("TypeForRoundReturn", {"Pot": int, "Game Checked": bool, "Remaining Players": list[Player]})
@@ -38,15 +32,17 @@ class Game:
     def __init__(
         self,
         game_id: str,
-        players: list[Player] = [Player1(), Player2(), Player3(), Player4()],
         GAME_CONFIG: GameConfig = GAME_CONFIG
     ) -> None:
-        
         self.game_id = game_id
-        if not GAME_CONFIG["NUMBER_PLAYERS"] > 1 and GAME_CONFIG["NUMBER_PLAYERS"] < 5:
-            raise ValueError("The number of players must be between 2 and 4")
+        # Set up player list
+        player_class_name = GAME_CONFIG["PLAYER_CLASS"]
+        self.players: list[Player] = []
+        for file_name in GAME_CONFIG["PLAYER_FILES"]:
+            # Import the player module, get the Player class and create an instance of it    
+            player: Player = getattr(import_module(file_name), player_class_name)()
+            self.players.append(player)
         # Store game configuration data
-        self.players = players[:GAME_CONFIG["NUMBER_PLAYERS"]]
         self.GAME_CONFIG = GAME_CONFIG
         self.NUMBER_ROUNDS = GAME_CONFIG["NUMBER_ROUNDS"]
         self.ANTE_BET = GAME_CONFIG["ANTE_BET"]

@@ -13,7 +13,7 @@ from configuration import GameConfig
 from player import Player, RoundRecord
 from utilities import validate_bet
 
-class Player_Code(Player):
+class PlayerCode(Player):
     
     @property
     def name(self) -> str:
