@@ -7,9 +7,9 @@ Author: Seán Young
 
 import logging
 
-from configuration import GameConfig, TypeForPlayState
+from configuration import TypeForPlayState
 from player import Player, RoundRecord
-from utilities import validate_bet, round_state, print_records
+from utilities import validate_bet, print_records
 
 class PlayerCode(Player):
     
@@ -17,66 +17,78 @@ class PlayerCode(Player):
     def name(self) -> str:
         return "player_3"
 
+    def __init__(self, cash_balance: int = 0):
+        super().__init__(cash_balance)
+
     def take_bet(
             self,
             required_bet: int,
             pot: int,
+            betting_state: TypeForPlayState,
             round_data: list[RoundRecord],
-            game_config: GameConfig,
+
             is_raise_allowed: bool = True,
         ) -> int:
-
             self.logger.debug(f"{self.name} has been asked for a bet")
             
-            play_state: TypeForPlayState = round_state(round_data, self.name) 
             if self.logger.getEffectiveLevel() == logging.DEBUG:
                 print(f"{self.name} round data:")
                 print_records(round_data)
-                print(f"{self.name} bet state: {play_state}")
+                print(f"{self.name} bet state: {betting_state}")
                 print(f"{self.name} game data:")
                 print_records(self.game_stats)
 
             bet: int = 0
-            match(play_state):
+            match(betting_state):
                 case("Opening Play"):
-                    if self.card.value < 4:
+                    if self.card.value < 7:
                         bet = 0 # Check
-                    elif self.card.value < 5:
-                        bet = game_config["MIN_BET_OR_RAISE"] # Bet
+                    elif self.card.value < 10:
+                        bet = Player.CONFIG["MIN_BET_OR_RAISE"] # Bet
                     else:
-                        bet = game_config["MAX_BET_OR_RAISE"] # Bet
-                case("Checked Play"):
-                    if self.card.value < 5:
+                        bet = Player.CONFIG["MAX_BET_OR_RAISE"] # Bet
+                case("Opening after Check Play"):
+                    if self.card.value < 7:
                         bet = 0 # Check
                     elif self.card.value < 7:
-                        bet = game_config["MIN_BET_OR_RAISE"] # Bet
+                        bet = Player.CONFIG["MIN_BET_OR_RAISE"] # Bet
                     else:
-                        bet = game_config["MAX_BET_OR_RAISE"] # Bet
-                case("First Bet Play"):
-                    if self.card.value < 4:
+                        bet = Player.CONFIG["MAX_BET_OR_RAISE"] # Bet
+                case("Bet after Open"):
+                    if self.card.value < 7:
                         bet = 0 # Fold
-                    elif self.card.value < 6:
+                    elif self.card.value < 7:
                         bet = required_bet # See
                     else:
                         if is_raise_allowed:
-                            bet = required_bet + game_config["MAX_BET_OR_RAISE"] # Raise    
+                            bet = required_bet + Player.CONFIG["MAX_BET_OR_RAISE"] # Raise    
                         else:
                             bet = required_bet # See
-                case("Raise Play"):
+                case("Bet after Check"):
+                    if self.card.value < 7:
+                        bet = 0 # Fold
+                    elif self.card.value < 7:
+                        bet = required_bet # See
+                    else:
                         if is_raise_allowed:
-                            if self.card.value < 5:
-                                bet = 0 # Fold
-                            elif self.card.value < 7:
-                                bet = required_bet # See
-                            else:              
-                                bet = required_bet + game_config["MAX_BET_OR_RAISE"] # Raise    
+                            bet = required_bet + Player.CONFIG["MAX_BET_OR_RAISE"] # Raise    
                         else:
-                            if self.card.value > 5:
-                                bet = required_bet # See
-                            else:
-                                bet = 0 # Fold
+                            bet = required_bet # See
+                case("Bet after Raise"):
+                    if is_raise_allowed:
+                        if self.card.value < 7:
+                            bet = 0 # Fold
+                        elif self.card.value < 7:
+                            bet = required_bet # See
+                        else:              
+                            bet = required_bet + Player.CONFIG["MAX_BET_OR_RAISE"] # Raise    
+                    else:
+                        if self.card.value > 7:
+                            bet = required_bet # See
+                        else:
+                            bet = 0 # Fold
 
 
-            validate_bet(required_bet, bet, game_config, is_raise_allowed)
+            validate_bet(required_bet, bet, Player.CONFIG, is_raise_allowed)
 
             return bet

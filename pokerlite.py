@@ -16,13 +16,14 @@ import logging.config
 from importlib import import_module
 
 # Import pokerlite elements
-from configuration import GameConfig, GAME_CONFIG, RoundRecord, GameRecord, TypeForBetType
+from configuration import GameConfig, GAME_CONFIG, RoundRecord, GameRecord, TypeForBetType, TypeForPlayState
 from components import Deck
 from player import Player
-from utilities import print_records
+from utilities import print_records, round_state
 
 # Custom type
 TypeForRoundReturn = TypedDict("TypeForRoundReturn", {"Pot": int, "Game Checked": bool, "Remaining Players": list[Player]})
+
 class Game:
     """
     Runs a betting game.
@@ -122,12 +123,17 @@ class Game:
                 # The required bet for the current betting player is the highest cumulative bet placed so far
                 # less the amount the betting player has already bet
                 required_bet = highest_cumulative_bet - betting_player.bet_running_total
+                # Determine the betting state
+                betting_state: TypeForPlayState = round_state(
+                    round_data=round_data,
+                    player_name=betting_player.name
+                )
                 # Ask the player for a bet         
                 bet = betting_player.take_bet(
                     required_bet=required_bet, 
                     pot=pot,
+                    betting_state = betting_state,
                     round_data=round_data,
-                    game_config=self.GAME_CONFIG,
                     is_raise_allowed=is_raise_allowed
                 )
                 # Deduct the bet from the player"s cash balance
@@ -232,6 +238,9 @@ class Game:
             "Player": "",
             "Value": round_number
         })
+        
+        # A pot is only fed in following a checked game or games
+        num_checked_games: int = pot // (len(self.players) * self.ANTE_BET)
 
         # Create a deck of cards from 1 to card_high_number
         deck = Deck.create(self.CARD_HIGH_NUMBER, shuffle=True)
@@ -317,8 +326,9 @@ class Game:
                 "Pot": pot,
                 "Description": "Win",
                 "Player": winner.name,
-                "Value": pot
+                "Value": pot - winner.bet_running_total - (self.ANTE_BET * (num_checked_games + 1)) 
             })
+            num_checked_games = 0
             pot = 0
         else:
             # Otherwise the pot is passed to the next betting round
@@ -355,7 +365,7 @@ class Game:
             "Value": 0
         })
         round_number = 1
-        pot = 0      
+        pot = 0 
         while round_number <= self.NUMBER_ROUNDS:
             pot = self.play_round(round_number, pot)
             round_number += 1

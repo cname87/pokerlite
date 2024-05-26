@@ -5,6 +5,11 @@ This module holds the interface to the players" game play code for the Pokerlite
 Author: Seán Young
 """
 
+import logging
+import logging.config
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('utility')
+
 from typing import Any
 from collections import defaultdict
 from configuration import GameConfig, RoundRecord, TypeForPlayState, CARD_HIGH_NUMBER
@@ -57,11 +62,28 @@ def print_records(record_list: list[Any]) -> None:
         row = " | ".join(str(record[key]).ljust(max_lengths[key], " ") for key in max_lengths)
         print(row)
 
+
+def find_last_record_with_value(records: list[RoundRecord], field_to_find: str, value_to_test: str, field_to_return: str) -> str | None :
+    for record in reversed(records):
+        if record.get(field_to_find) == value_to_test:
+            return record.get(field_to_return)
+    return None
+
+def remove_number(list: list[int], num_to_remove: int) -> list[int]:
+    # Returns a new list with a number removed but leaves the original list unchanged
+    return [num for num in list if num != num_to_remove]
+
+
 def round_state(round_data: list[RoundRecord], player_name: str) -> TypeForPlayState:
     
-    # Strip data from the list of records containing individual bet data
+    # Find the player's last play
     last_record = round_data[-1]
-    played = [record["Player"] for record in round_data if "Player" in record]
+    last_played = find_last_record_with_value(
+        field_to_find="Player",
+        records=round_data,
+        value_to_test=player_name,
+        field_to_return="Bet_Type"
+    )
     
     # First test if this is an opening bet
     # You can check or bet
@@ -70,14 +92,18 @@ def round_state(round_data: list[RoundRecord], player_name: str) -> TypeForPlayS
     # Then test if the previous players have all checked
     # You can check or bet
     if last_record["Bet_Type"] == "Check":
-        return "Checked Play"
-    # Then test if only other players have played so far, in which case this is your first bet (and not opening or replying to previous checks)
-    # If not then you have already played, in which case another player must have raised
-    # For either, you must fold, see, or raise, (assuming the maximum number of raises is not exceeded)
-    if player_name not in played:
-        return "First Bet Play"
+        return "Opening after Check Play"
+    # Then test the player' last play to test the type of bet being requested
+    # You must fold, see, or raise if the maximum number of raises is not exceeded
+    if last_played == None:
+        # Player has not played this round => a bet after an open
+        return "Bet after Open"
+    elif last_played == "Check":
+        # Player has previously checked => a bet after a check 
+        return "Bet after Check"
     else:
-        return "Raise Play"
+        # Player has previously played but not checked (and is not the closing player) => a bet after a player has raised
+        return "Bet after Raise"
     
     
 def second_bet(
@@ -105,12 +131,14 @@ def second_bet(
 
     bet_cards: list[int] = []
     for card in range(1, CARD_HIGH_NUMBER + 1):
+        # other_player_bets = [8,9]
+        cleaned_other_player_bets = remove_number(other_player_bets, card)
         winnings: int = 0
         cost = 0
         # Run through all the cards the other player could hold
-        for other_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != card]:    
-            if other_card not in other_player_bets: # Other player checks
-                winnings += pot
+        for other_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != card]:
+            if other_card not in cleaned_other_player_bets: # Other player checks
+                winnings += 0 # Player checks
             else: # Other player bets
                 if card > other_card: # Player wins
                     winnings += pot + required_bet
@@ -141,15 +169,17 @@ def opening_bet(
 
     # An estimated list of the cards for which the other player will bet and not fold
     if other_player_bets == []:
-        other_player_bets = second_bet(pot, required_bet)
+       other_player_bets = second_bet(pot, required_bet)
     
     bet_cards: list[int] = []
     for card in range(1, CARD_HIGH_NUMBER + 1):
+        # other_player_bets = [7,8,9]
+        cleaned_other_player_bets = remove_number(other_player_bets, card)
         winnings: int = 0
         cost = 0
         # Run through all the cards the other player could hold
         for other_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != card]:
-            if other_card not in other_player_bets: # Other player folds
+            if other_card not in cleaned_other_player_bets: # Other player folds
                 winnings += pot
             else: # Other player sees
                 if card > other_card: # Player wins
@@ -173,10 +203,11 @@ def bet_cards(
     max_loops = 5
     while max_loops > 0:
         # Start with an estimate of the second bet
+        copied_second_bet_estimate = second_bet_estimate.copy()
         opening_bet_result = opening_bet(
             pot=pot,
             required_bet=bet,
-            other_player_bets=second_bet_estimate
+            other_player_bets=copied_second_bet_estimate
         )
         second_bet_result = second_bet(
             pot=pot,
@@ -184,8 +215,8 @@ def bet_cards(
             other_player_bets=opening_bet_result
         )
 
-        # print(f"Second bet estimate for pot = {pot} and bet = {bet}  : {second_bet_estimate}")
-        # print(f"Second bet interim result for pot = {pot} and bet = {bet}  : {second_bet_result}")
+        logger.debug(f"Second bet estimate for pot = {pot} and bet = {bet}  : {second_bet_estimate}")
+        logger.debug(f"Second bet interim result for pot = {pot} and bet = {bet}  : {second_bet_result}")
         
         # Check if the card decks match
         if second_bet_result == second_bet_estimate:
@@ -196,13 +227,12 @@ def bet_cards(
         
         max_loops -= 1
         
-    # print(f"Final opening bet for pot = {pot} and bet = {bet}  : {opening_bet_result}")
-    # print(f"Final second bet for pot = {pot} and bet = {bet}  : {second_bet_result}")
+    logger.debug(f"Final opening bet for pot = {pot} and bet = {bet}  : {opening_bet_result}")
+    logger.debug(f"Final second bet for pot = {pot} and bet = {bet}  : {second_bet_result}")
 
     return {
         "Opening Bet": opening_bet_result, 
         "Second Bet": second_bet_result
     }
-
 
 # bet_cards(20, 100)

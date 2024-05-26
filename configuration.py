@@ -8,23 +8,35 @@ Author: Seán Young
 from __future__ import annotations
 from typing import Literal, TypedDict
 
+
 #############################################
 # Set the game configuration parameters here
-ALL_PLAYER_FILES: list[str] = ["player1", "player2", "player3", "player4"] # The file names of all player code files
+
+# The file names of all player code files
+ALL_PLAYER_FILES: list[str] = ["player1", "player2", "player3", "player4"]
+# Two to four of the numbers 1, 2, 3, 4 corresponding to th 4 players in ALL_PLAYER_FILES
 CURRENT_PLAYER_FILE_NUMBERS: list[int] = [1, 3]
-PLAYER_CLASS = "PlayerCode" # The name of the class to be defined in each player file 
-NUMBER_ROUNDS: int = 2 # The game consists of this many betting rounds
-CARD_HIGH_NUMBER = 9 # Each player gets a card with a number between 1 and this value
-ANTE_BET: int = 10 # Ante amount paid into the pot at the start of each betting round by each player
-MIN_BET_OR_RAISE: int = 10 * ANTE_BET # Minimum opening bet, also minimum raise bet, (i.e., amount above that required to see the previous bet)
-MAX_BET_OR_RAISE: int = 1 * MIN_BET_OR_RAISE # Maximum opening bet, also maximum raise bet, (i.e., amount above that required to see the previous bet)
-MAX_RAISES: int = 0 # Number of raises allowed
+# The name of the class to be defined in each player file 
+PLAYER_CLASS = "PlayerCode"
+# The game consists of this many betting rounds
+NUMBER_ROUNDS: int = 10
+ # Each player gets a card with a number between 1 and this value
+CARD_HIGH_NUMBER = 9
+# Ante amount paid into the pot at the start of each betting round by each player
+ANTE_BET: int = 10
+# Minimum opening bet, also minimum raise bet, (i.e., amount above that required to see the previous bet)
+MIN_BET_OR_RAISE: int = 10 * ANTE_BET
+# Maximum opening bet, also maximum raise bet, (i.e., amount above that required to see the previous bet)
+MAX_BET_OR_RAISE: int = 1 * MIN_BET_OR_RAISE
+# Number of raises allowed
+MAX_RAISES: int = 0
 
 #############################################
 
+# Load the player files from the numbers entered above
 current_player_files: list[str] = []
 for i in CURRENT_PLAYER_FILE_NUMBERS:
-    current_player_files.append(ALL_PLAYER_FILES[i])
+    current_player_files.append(ALL_PLAYER_FILES[i-1])
 
 # Define type for passing game configuration data
 class GameConfig(TypedDict):
@@ -48,12 +60,12 @@ GAME_CONFIG: GameConfig = {
     "MAX_RAISES": MAX_RAISES
 }
 
+# Define various custom types
 TypeForGameState = Literal["Game Start", "Card", "Ante", "Round Start", "Checked", "Win"]
 TypeForBetType = Literal["Ante", "Check", "Open", "See", "Raise", "Fold"]
-TypeForPlayState = Literal["Opening Play", "Checked Play", "First Bet Play", "Raise Play"]
+TypeForPlayState = Literal["Opening Play", "Opening after Check Play", "Bet after Open", "Bet after Check", "Bet after Raise"]
 
-
-# Define type for a record of betting activity in a round
+# Define type for a record of betting activity in a betting round
 class RoundRecord(TypedDict):
     Round_Number: int
     Pot: int
