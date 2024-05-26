@@ -19,7 +19,7 @@ from importlib import import_module
 from configuration import GameConfig, GAME_CONFIG, RoundRecord, GameRecord, TypeForBetType, TypeForPlayState
 from components import Deck
 from player import Player
-from utilities import print_records, round_state
+from utilities import print_records
 
 # Custom type
 TypeForRoundReturn = TypedDict("TypeForRoundReturn", {"Pot": int, "Game Checked": bool, "Remaining Players": list[Player]})
@@ -65,6 +65,45 @@ class Game:
             start_player = random.choice(self.players)
         start_idx = self.players.index(start_player)
         return self.players[start_idx:] + self.players[:start_idx]
+    
+    def round_state(self, round_data: list[RoundRecord], player_name: str) -> TypeForPlayState:
+        # Find the player's last play
+    
+        def find_last_record_with_value(records: list[RoundRecord], field_to_find: str, value_to_test: str, field_to_return: str) -> str | None :
+            # Utility function to find the bet type associated with the last player record in the round data record list
+            for record in reversed(records):
+                if record.get(field_to_find) == value_to_test:
+                    return record.get(field_to_return)
+            return None
+    
+        last_record = round_data[-1]
+        last_played = find_last_record_with_value(
+            field_to_find="Player",
+            records=round_data,
+            value_to_test=player_name,
+            field_to_return="Bet_Type"
+        )
+        # First test if this is an opening bet
+        # You can check or bet
+        if last_record["Bet_Type"] == "Ante":
+            return "Opening Play"
+        # Then test if the previous players have all checked
+        # You can check or bet
+        if last_record["Bet_Type"] == "Check":
+            return "Opening after Check Play"
+        # Then test the player' last play to test the type of bet being requested
+        # You must fold, see, or raise if the maximum number of raises is not exceeded
+        if last_played == None:
+            # Player has not played this round => a bet after an open
+            return "Bet after Open"
+        elif last_played == "Check":
+            # Player has previously checked => a bet after a check 
+            return "Bet after Check"
+        else:
+            # Player has previously played but not checked (and is not the closing player) => a bet after a player has raised
+            return "Bet after Raise"
+    
+
     
     def take_bets(
             self,
@@ -123,8 +162,8 @@ class Game:
                 # The required bet for the current betting player is the highest cumulative bet placed so far
                 # less the amount the betting player has already bet
                 required_bet = highest_cumulative_bet - betting_player.bet_running_total
-                # Determine the betting state
-                betting_state: TypeForPlayState = round_state(
+                # Determine the betting state, i.e. whether this is an opening bet and so on
+                betting_state: TypeForPlayState = self.round_state(
                     round_data=round_data,
                     player_name=betting_player.name
                 )
@@ -384,5 +423,5 @@ if __name__ == "__main__":
     game_id: str = datetime.now().strftime("%d-%b-%Y %H:%M:%S")
     game = Game(game_id)
     game.play()
-    if game.logger.getEffectiveLevel() == logging.DEBUG:
-       print_records(game.game_records)
+    # if game.logger.getEffectiveLevel() == logging.DEBUG: 
+    # print_records(game.game_records)

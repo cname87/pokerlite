@@ -12,7 +12,7 @@ logger = logging.getLogger('utility')
 
 from typing import Any
 from collections import defaultdict
-from configuration import GameConfig, RoundRecord, TypeForPlayState, CARD_HIGH_NUMBER
+from configuration import GameConfig, CARD_HIGH_NUMBER
 
 # Utility function to validate bets
 def validate_bet(
@@ -62,51 +62,100 @@ def print_records(record_list: list[Any]) -> None:
         row = " | ".join(str(record[key]).ljust(max_lengths[key], " ") for key in max_lengths)
         print(row)
 
-
-def find_last_record_with_value(records: list[RoundRecord], field_to_find: str, value_to_test: str, field_to_return: str) -> str | None :
-    for record in reversed(records):
-        if record.get(field_to_find) == value_to_test:
-            return record.get(field_to_return)
-    return None
-
 def remove_number(list: list[int], num_to_remove: int) -> list[int]:
     # Returns a new list with a number removed but leaves the original list unchanged
     return [num for num in list if num != num_to_remove]
 
+def opening_bet(
+    pot: int,
+    required_bet: int,
+    other_player_bets: list[int] = [],
+) -> list[int]:
+      
+    """
+        Returns a list of the card numbers that the player should bet on, when the player is to open, i.e. has the choice to open or to check.
+        Note that the result is dependent on an estimate of the other player's betting strategy.
+        
+        Args:
+            pot: int: The value of the pot before the bet is made.
+            required_bet: int: The bet that the player must make.
+            other_player_bets: list[int]: An estimated list of the card numbers that the other player will see and not fold.
 
-def round_state(round_data: list[RoundRecord], player_name: str) -> TypeForPlayState:
+        Returns:
+            list[int]: A list of card numbers for which the player should make an open bet on.
+    """
+
+    # An estimated list of the cards for which the other player will bet and not fold
+    if other_player_bets == []:
+       other_player_bets = [8,9] 
+       # other_player_bets = bet_after_open(pot, required_bet)
     
-    # Find the player's last play
-    last_record = round_data[-1]
-    last_played = find_last_record_with_value(
-        field_to_find="Player",
-        records=round_data,
-        value_to_test=player_name,
-        field_to_return="Bet_Type"
-    )
+    bet_cards: list[int] = []
+    # Run though each possible player card and decide whether it should be be bet on 
+    for card in range(1, CARD_HIGH_NUMBER + 1):
+        # The other player cannot bet on the same card as the player
+        cleaned_other_player_bets = remove_number(other_player_bets, card)
+        winnings: int = 0
+        cost = 0
+        # Run through all the cards the other player could hold
+        for other_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != card]:
+            if other_card not in cleaned_other_player_bets: # Other player folds
+                winnings += pot
+            else: # Other player sees
+                if card > other_card: # Player wins
+                    winnings += pot + required_bet
+                else:
+                    cost += required_bet # Other player wins
+        if (winnings - cost) >= 0: # Bet if return is zero, or greater, otherwise check
+            bet_cards.append(card)
+    return bet_cards
     
-    # First test if this is an opening bet
-    # You can check or bet
-    if last_record["Bet_Type"] == "Ante":
-        return "Opening Play"
-    # Then test if the previous players have all checked
-    # You can check or bet
-    if last_record["Bet_Type"] == "Check":
-        return "Opening after Check Play"
-    # Then test the player' last play to test the type of bet being requested
-    # You must fold, see, or raise if the maximum number of raises is not exceeded
-    if last_played == None:
-        # Player has not played this round => a bet after an open
-        return "Bet after Open"
-    elif last_played == "Check":
-        # Player has previously checked => a bet after a check 
-        return "Bet after Check"
-    else:
-        # Player has previously played but not checked (and is not the closing player) => a bet after a player has raised
-        return "Bet after Raise"
+def opening_bet_after_check(
+    pot: int,
+    required_bet: int,
+    other_player_bets: list[int] = [],
+) -> list[int]:
+      
+    """
+        Returns a list of the card numbers that the player should bet on, when the player is to open after the other player has checked
+        The player has the choice to open or to check.  If the player checks the round ends and th pot is carried into the next round.
+        Note that the result is dependent on an estimate of the other player's betting strategy.
+        
+        Args:
+            pot: int: The value of the pot before the bet is made.
+            required_bet: int: The bet that the player must make.
+            other_player_bets: list[int]: An estimated list of the card numbers that the other player will see and not fold.
+
+        Returns:
+            list[int]: A list of card numbers for which the player should make an open on.
+    """
+
+    # An estimated list of the cards for which the other player will bet and not fold
+    if other_player_bets == []:
+       other_player_bets = [5,6,7]
+       # other_player_bets = bet_after_open(pot, required_bet)
     
-    
-def second_bet(
+    bet_cards: list[int] = []
+    # Run though each possible player card and decide whether it should be be bet on 
+    for card in range(1, CARD_HIGH_NUMBER + 1):
+        # The other player cannot bet on the same card as the player
+        cleaned_other_player_bets = remove_number(other_player_bets, card)
+        winnings: int = 0
+        cost = 0
+        # Run through all the cards the other player could hold
+        for other_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != card]:
+            if other_card not in cleaned_other_player_bets: # Other player folds
+                winnings += pot
+            else: # Other player sees
+                if card > other_card: # Player wins
+                    winnings += pot + required_bet
+                else:
+                    cost += required_bet # Other player wins
+        if (winnings - cost) >= 0: # Bet if return is zero, or greater
+            bet_cards.append(card)
+    return bet_cards
+
+def bet_after_open(
     pot: int,
     required_bet: int,
     other_player_bets: list[int] = [],
@@ -127,11 +176,11 @@ def second_bet(
 
     # An estimated list of the cards for which the other player has bet and not checked 
     if other_player_bets == []:
-        other_player_bets = opening_bet(pot, required_bet)
+        other_player_bets = [8,9]
+        # other_player_bets = opening_bet(pot, required_bet)
 
     bet_cards: list[int] = []
     for card in range(1, CARD_HIGH_NUMBER + 1):
-        # other_player_bets = [8,9]
         cleaned_other_player_bets = remove_number(other_player_bets, card)
         winnings: int = 0
         cost = 0
@@ -148,40 +197,43 @@ def second_bet(
             bet_cards.append(card)
     return bet_cards
 
-def opening_bet(
+
+def bet_after_check(
     pot: int,
     required_bet: int,
     other_player_bets: list[int] = [],
 ) -> list[int]:
       
     """
-        Returns a list of the card numbers that the player should bet on, when the player has the choice to open or to fold.
+        Returns a list of the card numbers that the player should bet on, when the player has the choice to see a required bet or fold.
+        In this case the other player has bet after the player has previously checked.
         The result is dependent on an estimate of the other player's betting strategy.
         
         Args:
             pot: int: The value of the pot before the bet is made.
             required_bet: int: The bet that the player must make.
-            other_player_bets: list[int]: An estimated list of the card numbers that the other player will bet, and not fold.
+            other_player_bets: list[int]: An estimated list of the card numbers that the other player has bet, and not checked.
 
         Returns:
             list[int]: A list of card numbers for which the player should bet on.
     """
 
-    # An estimated list of the cards for which the other player will bet and not fold
+    # An estimated list of the cards for which the other player has bet and not checked 
     if other_player_bets == []:
-       other_player_bets = second_bet(pot, required_bet)
-    
+        other_player_bets = [5,6,7,8,9]
+        # other_player_bets = opening_bet(pot, required_bet)
+
     bet_cards: list[int] = []
     for card in range(1, CARD_HIGH_NUMBER + 1):
-        # other_player_bets = [7,8,9]
+        # other_player_bets = [8,9]
         cleaned_other_player_bets = remove_number(other_player_bets, card)
         winnings: int = 0
         cost = 0
         # Run through all the cards the other player could hold
         for other_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != card]:
-            if other_card not in cleaned_other_player_bets: # Other player folds
-                winnings += pot
-            else: # Other player sees
+            if other_card not in cleaned_other_player_bets: # Other player checks
+                winnings += 0 # Player checks
+            else: # Other player bets
                 if card > other_card: # Player wins
                     winnings += pot + required_bet
                 else:
@@ -209,7 +261,7 @@ def bet_cards(
             required_bet=bet,
             other_player_bets=copied_second_bet_estimate
         )
-        second_bet_result = second_bet(
+        second_bet_result = bet_after_open(
             pot=pot,
             required_bet=bet,
             other_player_bets=opening_bet_result
@@ -235,4 +287,96 @@ def bet_cards(
         "Second Bet": second_bet_result
     }
 
-# bet_cards(20, 100)
+def run_simulation() -> None:
+    
+    ante: int = 10
+    bet: int = 100
+    player1_cash: int = 0
+    player2_cash: int  = 0
+    diff: int = 0
+    diff_max: int = -10000
+
+    player1_open_cards_list = [
+        [9],
+        [8,9],
+        [7,8,9],
+        [6,7,8,9],
+        [5,6,7,8,9],
+        [4,5,6,7,8,9],
+        [3,4,5,6,7,8,9]
+    ]
+    player2_see_cards = [7,8,9]
+    player2_check_open_cards = [7,8,9]
+    player1_check_see_cards_list = [
+        [9],
+        [8,9],
+        [7,8,9],
+        [6,7,8,9],
+        [5,6,7,8,9],
+        [4,5,6,7,8,9],
+        [3,4,5,6,7,8,9]
+    ]
+
+    for player1_open_cards_from_list in player1_open_cards_list:
+        for player1_check_see_cards_from_list in player1_check_see_cards_list:
+            # Run every possible card combination, all equally likely and sum winnings over all
+            for player1_card in range(1, CARD_HIGH_NUMBER + 1):
+                for player2_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != player1_card]:
+                    player1_cash -= ante
+                    player2_cash -= ante
+                    pot = 2 * ante
+                    if player1_card in player1_open_cards_from_list:
+                        # Player 1 opens
+                        player1_cash -= bet
+                        if player2_card in player2_see_cards:
+                            # Player 2 sees
+                            player2_cash -= bet
+                            if player1_card > player2_card:
+                                # Player 1 wins
+                                player1_cash += (pot + (2 *bet))
+                            else:
+                                # Player 2 wins
+                                player2_cash += (pot + (2 * bet))
+                        else:
+                            # Player 2 folds = Player 1 wins
+                            player1_cash += (pot + bet)
+                    else:
+                        # Player 1 checks
+                        if player2_card in player2_check_open_cards:
+                            # Player 2 opens
+                            player2_cash -= bet
+                            if player1_card in player1_check_see_cards_from_list:
+                                # Player 1 sees
+                                player1_cash -= bet
+                                if player1_card > player2_card:
+                                    # Player 1 wins
+                                    player1_cash += (pot + (2 * bet))
+                                else:
+                                    # Player 2 wins
+                                    player2_cash += (pot + (2 * bet))
+                            else:
+                                # Player 1 folds => Player 2 wins
+                                player2_cash += (pot + bet)
+                        else:
+                            # Player 2 checks => no winner
+                            player1_cash +=ante
+                            player2_cash += ante
+            print(f"Player1 balance after 1 loop of cards: {player1_cash}")
+            print(f"Player2 balance after 1 loop of cards: {player2_cash}")
+
+    print(f"Player1 balance: {player1_cash}")
+    print(f"Player2 balance: {player2_cash}")
+    if player1_cash > diff_max:
+        diff_max = player1_cash
+        print(f"Diff Max: {diff_max}")
+        print(f"Player1 open cards list: {player1_open_cards_from_list}")
+        print(f"Player1 check see cards list: {player1_check_see_cards_from_list}")
+        print(f"Player1 balance: {player1_cash}")
+        print(f"Player2 balance: {player2_cash}")
+
+# print(opening_bet(20,100))
+# print(opening_bet_after_check(20,100))
+# print(bet_after_check(20,1000))
+# print(bet_cards(20, 100))
+
+run_simulation()
