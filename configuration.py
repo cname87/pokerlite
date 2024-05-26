@@ -19,7 +19,7 @@ CURRENT_PLAYER_FILE_NUMBERS: list[int] = [2, 4]
 # The name of the class to be defined in each player file 
 PLAYER_CLASS = "PlayerCode"
 # The game consists of this many betting rounds
-NUMBER_ROUNDS: int = 1
+NUMBER_ROUNDS: int = 1_000_000
  # Each player gets a card with a number between 1 and this value
 CARD_HIGH_NUMBER = 9
 # Ante amount paid into the pot at the start of each betting round by each player
@@ -63,7 +63,7 @@ GAME_CONFIG: GameConfig = {
 # Define various custom types
 TypeForGameState = Literal["Game Start", "Card", "Ante", "Round Start", "Checked", "Win"]
 TypeForBetType = Literal["Ante", "Check", "Open", "See", "Raise", "Fold"]
-TypeForPlayState = Literal["Opening Play", "Opening after Check Play", "Bet after Open", "Bet after Check", "Bet after Raise"]
+TypeForPlayState = Literal["Opening Play", "Opening after Check Play", "See after Open", "See after Opening following Check", "Bet after Raise", "End Game"]
 
 # Define type for a record of betting activity in a betting round
 class RoundRecord(TypedDict):

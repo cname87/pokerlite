@@ -60,7 +60,7 @@ class PlayerCode(Player):
                     else:
                         bet = 0 # Fold
                         self.logger.debug(f"Checked so round ends and pot carries")
-                case("Bet after Open"):
+                case("See after Open"):
                     player_bet_cards = bet_cards(pot, Player.CONFIG["MIN_BET_OR_RAISE"])["Second Bet"]
                     self.logger.debug(f"The playing cards are: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
@@ -69,7 +69,7 @@ class PlayerCode(Player):
                     else:
                         bet = 0 # Fold
                         self.logger.debug(f"Folding")
-                case("Bet after Check"):
+                case("See after Opening following Check"):
                     player_bet_cards = bet_after_check(pot, Player.CONFIG["MIN_BET_OR_RAISE"])
                     self.logger.debug(f"The playing cards are: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
@@ -87,6 +87,8 @@ class PlayerCode(Player):
                     else:
                         bet = 0 # Fold
                         self.logger.debug(f"Folding")
+                case _:
+                    pass
 
             validate_bet(required_bet, bet, Player.CONFIG, is_raise_allowed)
 
