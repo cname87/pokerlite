@@ -8,7 +8,7 @@ import logging
 
 from components import Card
 from abc import ABC, abstractmethod
-from configuration import GameConfig, RoundRecord, GameRecord
+from configuration import GameConfig, GAME_CONFIG, RoundRecord, GameRecord, TypeForPlayState
 
 
 game_records: list[GameRecord] = []
@@ -20,12 +20,14 @@ class Player(ABC):
     Args:
         ABC: Creates an abstract function. 
     """
+
+    CONFIG: GameConfig = GAME_CONFIG
     
     def __init__(
         self,
         cash_balance: int = 0,
-    ):
-        self.cash_balance = cash_balance
+    ) -> None:
+        self._cash_balance = cash_balance
         self._card: Card = Card(0)
         self._bet_running_total: int = 0
         self._game_stats: list[GameRecord] = []
@@ -38,6 +40,14 @@ class Player(ABC):
         Override this with a function that returns a string which will be used as the player name.
         """
         pass
+
+    @property
+    def cash_balance(self) -> int:
+        return self._cash_balance
+
+    @cash_balance.setter
+    def cash_balance(self, amount: int) -> None:
+        self._cash_balance = amount
     
     @property
     def card(self) -> Card:
@@ -67,9 +77,9 @@ class Player(ABC):
     def take_bet(
         self,
         required_bet: int,
-        pot: int,   
+        pot: int,
+        betting_state: TypeForPlayState,
         round_data: list[RoundRecord],
-        game_config: GameConfig,
         is_raise_allowed: bool = True,
     ) -> int:
         """
@@ -89,7 +99,6 @@ class Player(ABC):
                 If the player bets in excess of required_bet, the excess is a raise bet.
             pot: (int): The pot as the request is mde to bet.
             round_data: Data on the bets made so far during the round.
-            game_config: Game configuration data.
             is_raise_allowed (bool, optional): True if the player is allowed to raise. Defaults to True.
 
         Returns:
