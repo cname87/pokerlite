@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 
 """
-This player strategy is random.  All choices are random.
+This player strategy is not random but based on guesses
 Author: Seán Young
 """
 
-import random
-
-# import logging
+import logging
 
 from configuration import TypeForPlayState
 from player import Player, RoundRecord
-from utilities import validate_bet
+from utilities import validate_bet, print_records
 
 class PlayerCode(Player):
     
@@ -19,37 +17,56 @@ class PlayerCode(Player):
     def name(self) -> str:
         return "player_4"
 
+    def __init__(self, cash_balance: int = 0):
+        super().__init__(cash_balance)
+
     def take_bet(
             self,
             required_bet: int,
             pot: int,
             betting_state: TypeForPlayState,
             round_data: list[RoundRecord],
+
             is_raise_allowed: bool = True,
         ) -> int:
-        
-            self.logger.debug(f"Received game stats, game id is: {self.game_stats[0]["Game_Id"]}")
+            self.logger.debug(f"{self.name} has been asked for a bet")
             
+            if self.logger.getEffectiveLevel() == logging.DEBUG:
+                print(f"{self.name} round data:")
+                print_records(round_data)
+                print(f"{self.name} bet state: {betting_state}")
+                print(f"{self.name} game data:")
+                print_records(self.game_stats)
+
             bet: int = 0
-            if required_bet == 0: # opening bet
-                random_play = random.randint(1, 2)
-                match(random_play):
-                    case 1: # 50%
+            match(betting_state):
+                case("Opening Play"):
+                    if self.card.value < 7:
                         bet = 0 # Check
-                    case _: # 50%
-                        bet = random.randint(Player.CONFIG["MIN_BET_OR_RAISE"], Player.CONFIG["MAX_BET_OR_RAISE"]) # Opening bet
-            else:
-                random_play = random.randint(1, 10)
-                match(random_play):
-                    case 1: # 10%
-                        bet = 0 # fold
-                    case n if n > 1 and n < 6: # 40%
-                        bet = required_bet # see
-                    case _: # 50%
-                        if is_raise_allowed:
-                            bet: int = required_bet + random.randint(Player.CONFIG["MIN_BET_OR_RAISE"], Player.CONFIG["MAX_BET_OR_RAISE"]) # raise    
-                        else:
-                            bet = required_bet # see
+                    else:
+                        bet = Player.CONFIG["MIN_BET_OR_RAISE"] # Bet
+                case("Opening after Check Play"):
+                    if self.card.value < 7:
+                        bet = 0 # Check
+                    else:
+                        bet = Player.CONFIG["MIN_BET_OR_RAISE"] # Bet
+                case("Bet after Open"):
+                    if self.card.value < 7:
+                        bet = 0 # Fold
+                    else:
+                        bet = required_bet # See
+                case("Bet after Check"):
+                    if self.card.value < 7:
+                        bet = 0 # Fold  
+                    else:
+                        bet = required_bet # See
+                case("Bet after Raise"):
+                    if self.card.value < 7:
+                        bet = 0 # Fold
+                    else:
+                        bet = required_bet # See
+
+
 
             validate_bet(required_bet, bet, Player.CONFIG, is_raise_allowed)
 

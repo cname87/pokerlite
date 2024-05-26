@@ -43,50 +43,28 @@ class PlayerCode(Player):
                 case("Opening Play"):
                     if self.card.value < 7:
                         bet = 0 # Check
-                    elif self.card.value < 10:
-                        bet = Player.CONFIG["MIN_BET_OR_RAISE"] # Bet
                     else:
-                        bet = Player.CONFIG["MAX_BET_OR_RAISE"] # Bet
+                        bet = required_bet # Bet
                 case("Opening after Check Play"):
                     if self.card.value < 7:
                         bet = 0 # Check
-                    elif self.card.value < 7:
-                        bet = Player.CONFIG["MIN_BET_OR_RAISE"] # Bet
                     else:
-                        bet = Player.CONFIG["MAX_BET_OR_RAISE"] # Bet
+                        bet = required_bet # Bet
                 case("Bet after Open"):
                     if self.card.value < 7:
-                        bet = 0 # Fold
-                    elif self.card.value < 7:
-                        bet = required_bet # See
+                        bet = 0 # Fold 
                     else:
-                        if is_raise_allowed:
-                            bet = required_bet + Player.CONFIG["MAX_BET_OR_RAISE"] # Raise    
-                        else:
-                            bet = required_bet # See
+                        bet = required_bet # See
                 case("Bet after Check"):
                     if self.card.value < 7:
                         bet = 0 # Fold
-                    elif self.card.value < 7:
+                    else:
                         bet = required_bet # See
-                    else:
-                        if is_raise_allowed:
-                            bet = required_bet + Player.CONFIG["MAX_BET_OR_RAISE"] # Raise    
-                        else:
-                            bet = required_bet # See
                 case("Bet after Raise"):
-                    if is_raise_allowed:
-                        if self.card.value < 7:
-                            bet = 0 # Fold
-                        elif self.card.value < 7:
-                            bet = required_bet # See
-                        else:              
-                            bet = required_bet + Player.CONFIG["MAX_BET_OR_RAISE"] # Raise    
+                    if self.card.value < 7:
+                        bet = 0 # Fold 
                     else:
-                        if self.card.value > 7:
-                            bet = required_bet # See
-                        else:
-                            bet = 0 # Fold
+                        bet = required_bet # See
 
 
             validate_bet(required_bet, bet, Player.CONFIG, is_raise_allowed)

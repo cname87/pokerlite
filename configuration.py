@@ -15,11 +15,11 @@ from typing import Literal, TypedDict
 # The file names of all player code files
 ALL_PLAYER_FILES: list[str] = ["player1", "player2", "player3", "player4"]
 # Two to four of the numbers 1, 2, 3, 4 corresponding to th 4 players in ALL_PLAYER_FILES
-CURRENT_PLAYER_FILE_NUMBERS: list[int] = [1, 3]
+CURRENT_PLAYER_FILE_NUMBERS: list[int] = [2, 4]
 # The name of the class to be defined in each player file 
 PLAYER_CLASS = "PlayerCode"
 # The game consists of this many betting rounds
-NUMBER_ROUNDS: int = 10
+NUMBER_ROUNDS: int = 1
  # Each player gets a card with a number between 1 and this value
 CARD_HIGH_NUMBER = 9
 # Ante amount paid into the pot at the start of each betting round by each player

@@ -9,7 +9,7 @@ import logging
 
 from configuration import TypeForPlayState
 from player import Player, RoundRecord
-from utilities import validate_bet, bet_cards, print_records
+from utilities import bet_after_check, opening_bet_after_check, validate_bet, bet_cards, print_records
 
 class PlayerCode(Player):
     
@@ -52,7 +52,7 @@ class PlayerCode(Player):
                         bet = 0 # Check
                         self.logger.debug(f"Checked instead of opening")
                 case("Opening after Check Play"):
-                    player_bet_cards = bet_cards(pot, Player.CONFIG["MIN_BET_OR_RAISE"])["Opening Bet"]
+                    player_bet_cards = opening_bet_after_check(pot, Player.CONFIG["MIN_BET_OR_RAISE"])
                     self.logger.debug(f"The playing cards are: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
                         bet = Player.CONFIG["MIN_BET_OR_RAISE"] # Bet
@@ -70,7 +70,7 @@ class PlayerCode(Player):
                         bet = 0 # Fold
                         self.logger.debug(f"Folding")
                 case("Bet after Check"):
-                    player_bet_cards = bet_cards(pot, Player.CONFIG["MIN_BET_OR_RAISE"])["Second Bet"]
+                    player_bet_cards = bet_after_check(pot, Player.CONFIG["MIN_BET_OR_RAISE"])
                     self.logger.debug(f"The playing cards are: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
                         bet = required_bet # See

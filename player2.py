@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 
 """
-This player strategy is TBC
+This player strategy is nuanced
 Author: Seán Young
 """
 
-# import logging
+import logging
 
 from configuration import TypeForPlayState
 from player import Player, RoundRecord
-from utilities import validate_bet
+from utilities import validate_bet, print_records
 
 class PlayerCode(Player):
     
@@ -17,6 +17,9 @@ class PlayerCode(Player):
     def name(self) -> str:
         return "player_2"
 
+    def __init__(self, cash_balance: int = 0):
+        super().__init__(cash_balance)
+ 
     def take_bet(
             self,
             required_bet: int,
@@ -25,25 +28,63 @@ class PlayerCode(Player):
             round_data: list[RoundRecord],
             is_raise_allowed: bool = True,
         ) -> int:
-        
-            self.logger.debug(f"Received game stats, game id is: {self.game_stats[0]["Game_Id"]}")
+
+            self.logger.debug(f"{self.name} has been asked for a bet")
+            
+            if self.logger.getEffectiveLevel() == logging.DEBUG:
+                print(f"{self.name} round data:")
+                print_records(round_data)
+                print(f"{self.name} bet state: {betting_state}")
+                print(f"The player's card is: {self.card.value}")
 
             bet: int = 0
-            if required_bet == 0: # opening bet
-                match(self.card.value):
-                    case n if n < 4:
+
+            match(betting_state):
+                case("Opening Play"):
+                    player_bet_cards = [7,8,9]
+                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
+                    if self.card.value in player_bet_cards:
+                        bet = Player.CONFIG["MIN_BET_OR_RAISE"] # Bet
+                        self.logger.debug(f"Betting: {bet}")
+                    else:
                         bet = 0 # Check
-                    case _: 
-                        bet = Player.CONFIG["MAX_BET_OR_RAISE"]
-            else:
-                match(self.card.value):
-                    case n if n < 4:
-                        bet = 0 # fold
-                    case _: 
-                        if is_raise_allowed:
-                            bet: int = required_bet + Player.CONFIG["MAX_BET_OR_RAISE"] # raise    
-                        else:
-                            bet = required_bet # see
+                        self.logger.debug(f"Checked instead of opening")
+                case("Opening after Check Play"):
+                    player_bet_cards = [7,8,9]
+                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
+                    if self.card.value in player_bet_cards:
+                        bet = Player.CONFIG["MIN_BET_OR_RAISE"] # Bet
+                        self.logger.debug(f"Betting: {bet}")
+                    else:
+                        bet = 0 # Check
+                        self.logger.debug(f"Checked so round ends and pot carries")
+                case("Bet after Open"):
+                    player_bet_cards = [7,8,9]
+                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
+                    if self.card.value in player_bet_cards:
+                        bet = required_bet # See
+                        self.logger.debug(f"Seeing with bet: {bet}")
+                    else:
+                        bet = 0 # Fold
+                        self.logger.debug(f"Folding")
+                case("Bet after Check"):
+                    player_bet_cards = [7,8,9]
+                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
+                    if self.card.value in player_bet_cards:
+                        bet = required_bet # See
+                        self.logger.debug(f"Seeing with bet: {bet}")
+                    else:
+                        bet = 0 # Fold
+                        self.logger.debug(f"Folding")
+                case("Bet after Raise"):
+                    player_bet_cards = [7,8,9]
+                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
+                    if self.card.value in player_bet_cards:
+                        bet = required_bet # See
+                        self.logger.debug(f"Seeing with bet: {bet}")
+                    else:
+                        bet = 0 # Fold
+                        self.logger.debug(f"Folding")
 
             validate_bet(required_bet, bet, Player.CONFIG, is_raise_allowed)
 
