@@ -290,90 +290,214 @@ def bet_cards(
 def run_simulation() -> None:
     
     ante: int = 10
-    bet: int = 100
+    pot: int = 0
+    bet: int = 10 * ante
     player1_cash: int = 0
     player2_cash: int  = 0
-    diff: int = 0
-    diff_max: int = -10000
+    player1_max: int = -100_000
+    # player2_max: int = -100_000
+    num_deals: int = 0
 
     player1_open_cards_list = [
-        [9],
-        [8,9],
-        [7,8,9],
-        [6,7,8,9],
-        [5,6,7,8,9],
-        [4,5,6,7,8,9],
-        [3,4,5,6,7,8,9]
+        [9] #,
+        # [8,9],
+        # [7,8,9],
+        # [6,7,8,9],
+        # [5,6,7,8,9],
+        # [4,5,6,7,8,9],
+        # [3,4,5,6,7,8,9]
     ]
-    player2_see_cards = [7,8,9]
-    player2_check_open_cards = [7,8,9]
-    player1_check_see_cards_list = [
-        [9],
-        [8,9],
-        [7,8,9],
-        [6,7,8,9],
-        [5,6,7,8,9],
-        [4,5,6,7,8,9],
-        [3,4,5,6,7,8,9]
+    player1_see_after_check_then_other_bets_cards_list = [
+        [9] #,
+        # [8,9],
+        # [7,8,9],
+        # [6,7,8,9],
+        # [5,6,7,8,9],
+        # [4,5,6,7,8,9],
+        # [3,4,5,6,7,8,9]
+    ]
+    player1_see_after_open_cards_list = [
+        # [9],
+        [8,9] #,
+        # [7,8,9],
+        # [6,7,8,9],
+        # [5,6,7,8,9],
+        # [4,5,6,7,8,9],
+        # [3,4,5,6,7,8,9]
+    ]
+    player1_open_after_check_cards_list = [
+        # [9],
+        # [8,9],
+        # [7,8,9],
+        # [6,7,8,9],
+        # [5,6,7,8,9],
+        # [4,5,6,7,8,9],
+        [2,3,4,5,6,7,8,9]
     ]
 
+    player2_open_cards = [7,8,9]
+    player2_see_after_check_then_other_bets_cards = [7,8,9]
+    player2_see_after_open_cards = [7,8,9]
+    player2_check_after_open_cards = [7,8,9]
+
+
     for player1_open_cards_from_list in player1_open_cards_list:
-        for player1_check_see_cards_from_list in player1_check_see_cards_list:
+        for player1_see_after_check_then_other_bets_cards_from_list in player1_see_after_check_then_other_bets_cards_list:
             # Run every possible card combination, all equally likely and sum winnings over all
+            player2_cash = 0
+            player1_cash = 0
+            num_deals: int = 0
             for player1_card in range(1, CARD_HIGH_NUMBER + 1):
                 for player2_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != player1_card]:
+                    num_deals += 1
                     player1_cash -= ante
                     player2_cash -= ante
-                    pot = 2 * ante
+                    pot += (2 * ante)
                     if player1_card in player1_open_cards_from_list:
                         # Player 1 opens
                         player1_cash -= bet
-                        if player2_card in player2_see_cards:
+                        pot += bet
+                        if player2_card in player2_see_after_open_cards:
                             # Player 2 sees
                             player2_cash -= bet
+                            pot += bet
                             if player1_card > player2_card:
                                 # Player 1 wins
-                                player1_cash += (pot + (2 *bet))
+                                player1_cash += pot
+                                pot = 0
                             else:
                                 # Player 2 wins
-                                player2_cash += (pot + (2 * bet))
+                                player2_cash += pot
+                                pot = 0
                         else:
                             # Player 2 folds = Player 1 wins
-                            player1_cash += (pot + bet)
+                            player1_cash += pot
+                            pot = 0
                     else:
                         # Player 1 checks
-                        if player2_card in player2_check_open_cards:
+                        if player2_card in player2_check_after_open_cards:
                             # Player 2 opens
                             player2_cash -= bet
-                            if player1_card in player1_check_see_cards_from_list:
+                            pot += bet
+                            if player1_card in player1_see_after_check_then_other_bets_cards_from_list:
                                 # Player 1 sees
                                 player1_cash -= bet
+                                pot += bet
                                 if player1_card > player2_card:
                                     # Player 1 wins
-                                    player1_cash += (pot + (2 * bet))
+                                    player1_cash += pot
+                                    pot = 0
                                 else:
                                     # Player 2 wins
-                                    player2_cash += (pot + (2 * bet))
+                                    player2_cash += pot
+                                    pot = 0
                             else:
                                 # Player 1 folds => Player 2 wins
-                                player2_cash += (pot + bet)
+                                player2_cash += pot
+                                pot = 0
                         else:
                             # Player 2 checks => no winner
-                            player1_cash +=ante
+                            # Pot carries forward
+                            player1_cash += ante
                             player2_cash += ante
-            print(f"Player1 balance after 1 loop of cards: {player1_cash}")
-            print(f"Player2 balance after 1 loop of cards: {player2_cash}")
+                            pot = 0
+                            pass
+            print(f"Outer Player1 balance: {player1_cash}")
+            if player1_cash > player1_max:
+                player1_max = player1_cash
+                print(f"Number games played: {num_deals}")
+                print(f"Player1 max. balance after repeated 72 card loops: {player1_cash}")
+                print(f"Player2 equiv. balance after repeated 72 card loops: {player2_cash}")
+                print(f"Player1 open cards list: {player1_open_cards_from_list}")
+                print(f"Player1 see after check then other player bets cards list: {player1_see_after_check_then_other_bets_cards_from_list}")
 
-    print(f"Player1 balance: {player1_cash}")
-    print(f"Player2 balance: {player2_cash}")
-    if player1_cash > diff_max:
-        diff_max = player1_cash
-        print(f"Diff Max: {diff_max}")
-        print(f"Player1 open cards list: {player1_open_cards_from_list}")
-        print(f"Player1 check see cards list: {player1_check_see_cards_from_list}")
-        print(f"Player1 balance: {player1_cash}")
-        print(f"Player2 balance: {player2_cash}")
 
+    player1_max: int = -100_000
+
+    for player1_see_after_open_cards_from_list in player1_see_after_open_cards_list:
+        for player1_open_after_check_cards_from_list in player1_open_after_check_cards_list:
+            # Run every possible card combination, all equally likely and sum winnings over all
+            player2_cash = 0
+            player1_cash = 0
+            num_deals: int = 0
+            for player2_card in range(1, CARD_HIGH_NUMBER + 1):
+                for player1_card in [i for i in range(1, CARD_HIGH_NUMBER + 1) if i != player2_card]:
+                    num_deals += 1
+                    player2_cash -= ante
+                    player1_cash -= ante
+                    pot += (2 * ante)
+                    if player2_card in player2_open_cards:
+                        # Player 2 opens
+                        player2_cash -= bet
+                        pot += bet
+                        if player1_card in player1_see_after_open_cards_from_list:
+                            # Player 1 sees
+                            player1_cash -= bet
+                            pot += bet
+                            if player2_card > player1_card:
+                                # Player 2 wins
+                                player2_cash += pot
+                                pot = 0
+                            else:
+                                # Player 1 wins
+                                player1_cash += pot
+                                pot = 0
+                        else:
+                            # Player 1 folds = Player 2 wins
+                            player2_cash += pot
+                            pot = 0
+                    else:
+                        # Player 2 checks
+                        if player1_card in player1_open_after_check_cards_from_list:
+                            # Player 1 opens
+                            player1_cash -= bet
+                            pot += bet
+                            if player2_card in player2_see_after_check_then_other_bets_cards:
+                                # Player 2 sees
+                                player2_cash -= bet
+                                pot += bet
+                                if player2_card > player1_card:
+                                    # Player 2 wins
+                                    player2_cash += pot
+                                    pot = 0
+                                else:
+                                    # Player 1 wins
+                                    player1_cash += pot
+                                    pot = 0
+                            else:
+                                # Player 2 folds => Player 1 wins
+                                player1_cash += pot
+                                pot = 0
+                        else:
+                            # Player 1 checks => no winner
+                            # Pot carries forward
+                            player1_cash += ante
+                            player2_cash += ante
+                            pot = 0
+                            pass
+                    print(f"Inner loop player1 balance: {player1_cash}")
+                
+            print(f"Outer Player1 balance: {player1_cash}")
+            if player1_cash > player1_max:
+                player1_max = player1_cash
+                print(f"Number games played: {num_deals}")
+                print(f"Player1 see after open cards list: {player1_see_after_open_cards_from_list}")
+                print(f"Player1 open after check cards list: {player1_open_after_check_cards_from_list}")
+                print(f"Player1 max. balance after repeated 72 game loops: {player1_cash}")
+                print(f"Player2 equivalent balance: {player2_cash}")
+
+
+
+
+
+
+
+
+        # print(f"Player 1 Max: {player1_max}")
+        # print(f"Player1 open cards list: {player1_open_cards_from_list}")
+        # print(f"Player1 check see cards list: {player1_check_see_cards_from_list}")
+        # print(f"Player1 balance: {player1_cash}")
+        # print(f"Player2 balance: {player2_cash}")
 # print(opening_bet(20,100))
 # print(opening_bet_after_check(20,100))
 # print(bet_after_check(20,1000))

@@ -50,12 +50,12 @@ class PlayerCode(Player):
                         bet = 0 # Check
                     else:
                         bet = required_bet # Bet
-                case("Bet after Open"):
+                case("See after Open"):
                     if self.card.value < 7:
                         bet = 0 # Fold 
                     else:
                         bet = required_bet # See
-                case("Bet after Check"):
+                case("See after Opening following Check"):
                     if self.card.value < 7:
                         bet = 0 # Fold
                     else:
@@ -65,7 +65,8 @@ class PlayerCode(Player):
                         bet = 0 # Fold 
                     else:
                         bet = required_bet # See
-
+                case _:
+                    pass
 
             validate_bet(required_bet, bet, Player.CONFIG, is_raise_allowed)
 

@@ -85,25 +85,31 @@ class Game:
         )
         # First test if this is an opening bet
         # You can check or bet
-        if last_record["Bet_Type"] == "Ante":
-            return "Opening Play"
-        # Then test if the previous players have all checked
-        # You can check or bet
-        if last_record["Bet_Type"] == "Check":
-            return "Opening after Check Play"
-        # Then test the player' last play to test the type of bet being requested
-        # You must fold, see, or raise if the maximum number of raises is not exceeded
-        if last_played == None:
-            # Player has not played this round => a bet after an open
-            return "Bet after Open"
-        elif last_played == "Check":
-            # Player has previously checked => a bet after a check 
-            return "Bet after Check"
-        else:
-            # Player has previously played but not checked (and is not the closing player) => a bet after a player has raised
-            return "Bet after Raise"
-    
-
+        match[last_record["Bet_Type"]]:
+            case["Ante"]:
+                return "Opening Play"
+            # Then test if the previous player has checked
+            # You can check or bet
+            case["Check"]:
+                return "Opening after Check Play"
+            # Then test the player's last play to test the type of bet being requested
+            # You must fold, see, or raise if the maximum number of raises is not exceeded
+            case["Open"]:
+                if last_played == "Ante":
+                    # Player has not played this round => responding to an open bet
+                    return "See after Open"
+                elif last_played == "Check":
+                    # Player has previously checked => responding to an opening bet after a check 
+                    return "See after Opening following Check"
+                else:
+                    # Player has previously played but not checked (and is not the closing player) => responding to a bet after a player has raised
+                    return "Bet after Raise"
+            case["Raise"]:
+                    # Previous player has raised => responding to a raise bet
+                    return "Bet after Raise"
+            case _:
+                # See, Fold should end the game
+                return "End Game"    
     
     def take_bets(
             self,
@@ -150,6 +156,7 @@ class Game:
         bet_type: TypeForBetType = "Ante"
 
         #  Flag if all players checked which ends a betting round
+        # In this case the pot is returned and increments the pot for the next betting round
         isRoundChecked = False
         stop = False
         while not stop:
@@ -371,6 +378,9 @@ class Game:
             pot = 0
         else:
             # Otherwise the pot is passed to the next betting round
+            for player in betting_round_return["Remaining Players"]:
+                player.cash_balance += self.ANTE_BET
+            pot = 0
             self.game_records.append({
                 "Game_Id": self.game_id,
                 "Round_Number": round_number,
