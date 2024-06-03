@@ -7,9 +7,9 @@ Author: Seán Young
 
 import logging
 
-from configuration import TypeForPlayState
+from configuration import Strategy, TypeForPlayState
 from player import Player, RoundRecord
-from utilities import bet_after_check, opening_bet_after_check, validate_bet, bet_cards, print_records
+from utilities import validate_bet, print_records
 
 class PlayerCode(Player):
     
@@ -17,8 +17,19 @@ class PlayerCode(Player):
     def name(self) -> str:
         return "player_1"
 
-    def __init__(self, cash_balance: int = 0):
-        super().__init__(cash_balance)
+    def __init__(
+        self, 
+        cash_balance: int = 0,
+        strategy: Strategy =  {
+            "Dealer_Opens": [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 1.0}],
+            "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks":  [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 1.0}, {"9": 1.0}],
+            "Non_Dealer_Sees_after_Dealer_Opens": [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 1.0}],
+            "Non_Dealer_Opens_after_Dealer_Checks":  [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 1.0}, {"9": 1.0}],
+    }):
+        super().__init__(
+            cash_balance=cash_balance,
+            strategy=strategy
+        )
  
     def take_bet(
             self,
@@ -36,60 +47,49 @@ class PlayerCode(Player):
                 print_records(round_data)
                 print(f"{self.name} bet state: {betting_state}")
                 print(f"The player's card is: {self.card.value}")
-                # print(f"{self.name} game data:")
-                # print_records(self.game_stats)
 
             bet: int = 0
 
             match(betting_state):
-                case("Opening Play"):
-                    player_bet_cards = bet_cards(pot, Player.CONFIG["MIN_BET_OR_RAISE"])["Opening Bet"]
+                case("Dealer Opens"):
+                    player_bet_cards: list[int] = self.get_strategy_list(self.strategy["Dealer_Opens"])
                     self.logger.debug(f"The playing cards are: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
-                        bet = Player.CONFIG["MIN_BET_OR_RAISE"] # Bet
+                        bet = Player.get_CONFIG()["MIN_BET_OR_RAISE"] # Bet
                         self.logger.debug(f"Betting: {bet}")
                     else:
                         bet = 0 # Check
                         self.logger.debug(f"Checked instead of opening")
-                case("Opening after Check Play"):
-                    player_bet_cards = opening_bet_after_check(pot, Player.CONFIG["MIN_BET_OR_RAISE"])
+                case("Dealer Sees after Non-Dealer Opens after Dealer Checks"):
+                    player_bet_cards: list[int] = self.get_strategy_list(self.strategy["Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks"])
                     self.logger.debug(f"The playing cards are: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
-                        bet = Player.CONFIG["MIN_BET_OR_RAISE"] # Bet
+                        bet = required_bet # See
+                        self.logger.debug(f"Seeing with bet: {bet}")
+                    else:
+                        bet = 0 # Fold
+                        self.logger.debug(f"Folding")
+                case("Non-Dealer Sees after Dealer Opens"):
+                    player_bet_cards: list[int] = self.get_strategy_list(self.strategy["Non_Dealer_Sees_after_Dealer_Opens"])
+                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
+                    if self.card.value in player_bet_cards:
+                        bet = required_bet # See
+                        self.logger.debug(f"Seeing with bet: {bet}")
+                    else:
+                        bet = 0 # Fold
+                        self.logger.debug(f"Folding")
+                case("Non-Dealer Opens after Dealer Checks"):
+                    player_bet_cards: list[int] = self.get_strategy_list(self.strategy["Non_Dealer_Opens_after_Dealer_Checks"])
+                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
+                    if self.card.value in player_bet_cards:
+                        bet = Player.get_CONFIG()["MIN_BET_OR_RAISE"] # Bet
                         self.logger.debug(f"Betting: {bet}")
                     else:
                         bet = 0 # Fold
                         self.logger.debug(f"Checked so round ends and pot carries")
-                case("See after Open"):
-                    player_bet_cards = bet_cards(pot, Player.CONFIG["MIN_BET_OR_RAISE"])["Second Bet"]
-                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
-                    if self.card.value in player_bet_cards:
-                        bet = required_bet # See
-                        self.logger.debug(f"Seeing with bet: {bet}")
-                    else:
-                        bet = 0 # Fold
-                        self.logger.debug(f"Folding")
-                case("See after Opening following Check"):
-                    player_bet_cards = bet_after_check(pot, Player.CONFIG["MIN_BET_OR_RAISE"])
-                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
-                    if self.card.value in player_bet_cards:
-                        bet = required_bet # See
-                        self.logger.debug(f"Seeing with bet: {bet}")
-                    else:
-                        bet = 0 # Fold
-                        self.logger.debug(f"Folding")
-                case("Bet after Raise"):
-                    player_bet_cards = bet_cards(pot, Player.CONFIG["MIN_BET_OR_RAISE"])["Second Bet"]
-                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
-                    if self.card.value in player_bet_cards:
-                        bet = required_bet # See
-                        self.logger.debug(f"Seeing with bet: {bet}")
-                    else:
-                        bet = 0 # Fold
-                        self.logger.debug(f"Folding")
                 case _:
                     pass
 
-            validate_bet(required_bet, bet, Player.CONFIG, is_raise_allowed)
+            validate_bet(required_bet, bet, Player.get_CONFIG(), is_raise_allowed)
 
             return bet
