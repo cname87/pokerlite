@@ -5,14 +5,11 @@ This module holds the definition of the player class for the pokerlite program.
 Author: Seán Young
 """
 import logging
+import random
 
 from components import Card
 from abc import ABC, abstractmethod
-from configuration import GameConfig, GAME_CONFIG, RoundRecord, GameRecord, TypeForPlayState
-
-
-game_records: list[GameRecord] = []
-round_records: list[RoundRecord] = []
+from configuration import GameConfig, GAME_CONFIG, game_records, RoundRecord, GameRecord, TypeForPlayState, Strategy
 
 class Player(ABC):
     """
@@ -21,13 +18,30 @@ class Player(ABC):
         ABC: Creates an abstract function. 
     """
 
-    CONFIG: GameConfig = GAME_CONFIG
+    # Game configuration parameters
+    _CONFIG: GameConfig = GAME_CONFIG
+    @classmethod
+    def get_CONFIG(cls) -> GameConfig:
+        return cls._CONFIG
+
+    # A list of dictionaries with game betting rounds data
+    _game_stats: list[GameRecord] = game_records
+    @classmethod
+    def get_game_stats(cls) -> list[GameRecord]:
+        return cls._game_stats
     
     def __init__(
         self,
         cash_balance: int = 0,
+        strategy: Strategy =  {
+            "Dealer_Opens": [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 0.0}],
+            "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks":  [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 0.0}],
+            "Non_Dealer_Sees_after_Dealer_Opens": [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 0.0}],
+            "Non_Dealer_Opens_after_Dealer_Checks":  [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 0.0}],
+        }
     ) -> None:
         self._cash_balance = cash_balance
+        self._strategy: Strategy = strategy
         self._card: Card = Card(0)
         self._bet_running_total: int = 0
         self._game_stats: list[GameRecord] = []
@@ -66,12 +80,12 @@ class Player(ABC):
         self._bet_running_total = bet
 
     @property
-    def game_stats(self) -> list[GameRecord]:
-        return self._game_stats
-    
-    @game_stats.setter
-    def game_stats(self, stats: list[GameRecord]):
-        self._game_stats = stats
+    def strategy(self) -> Strategy:
+        return self._strategy
+        
+    @strategy.setter
+    def strategy(self, strategy: Strategy) -> None:
+        self._strategy = strategy
 
     @abstractmethod
     def take_bet(
@@ -121,6 +135,23 @@ class Player(ABC):
             winnings (int): The winnings amount.
         """
         self.cash_balance += winnings
+
+    # Takes an item from the strategy type and returns a list of numbers corresponding to the list of integer string / float dictionaries
+    # It converts a float into the corresponding integer by calling a random number between 0 and 1, e.g. if the float is 0.5 then it is converted to the appropriate integer if the called random number is less than 0.5   
+    def get_strategy_list(self, one_strategy: list[dict[str, float]]):
+
+        values_list: list[int] = []
+
+        # Iterate through each dictionary in the strategy list
+        for item in one_strategy:
+            # Get the value from the dictionary
+            float_value: float = list(item.values())[0]
+            int_value: int = 0
+            if random.random() < float_value:
+                int_value = int(list(item.keys())[0])
+            values_list.append(int_value)
+
+        return values_list
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.name!r})"

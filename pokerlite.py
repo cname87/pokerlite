@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-This program runs a program called Pokerlite.
+This program runs a simple betting game called Pokerlite.
 Author: Seán Young
 Date: 7 May 2024
 Version: 1.0
@@ -16,7 +16,7 @@ import logging.config
 from importlib import import_module
 
 # Import pokerlite elements
-from configuration import GameConfig, GAME_CONFIG, RoundRecord, GameRecord, TypeForBetType, TypeForPlayState
+from configuration import GameConfig, GAME_CONFIG, game_records, RoundRecord, GameRecord, TypeForBetType, TypeForPlayState
 from components import Deck
 from player import Player
 from utilities import print_records
@@ -26,13 +26,18 @@ TypeForRoundReturn = TypedDict("TypeForRoundReturn", {"Pot": int, "Game Checked"
 
 class Game:
     """
-    Runs a betting game.
-    See configuration.py for game rules.
+        Runs a betting game.
+        See configuration.py for game rules.
+    Args:
+        game_id: str: A string attached to the game record data to identify the game.
+        game_records: list[GameRecord]: A list to which dictionary records with game betting round data are appended.
+        GAME_CONFIG: GameConfig: A list of game parameter values. 
     """
     
     def __init__(
         self,
         game_id: str,
+        game_records: list[GameRecord] = game_records,
         GAME_CONFIG: GameConfig = GAME_CONFIG
     ) -> None:
         self.game_id = game_id
@@ -52,10 +57,9 @@ class Game:
         self.CARD_HIGH_NUMBER = GAME_CONFIG["CARD_HIGH_NUMBER"]
         self.MAX_RAISES = GAME_CONFIG["MAX_RAISES"]
         # A list of dictionary elements storing betting data from each betting round
-        self.game_records: list[GameRecord] = []
-        # Give access to the game records to each player
-        for player in self.players:
-            player.game_stats = self.game_records
+        self.game_records: list[GameRecord] = game_records
+
+        #Set up application logging configuration and local logger
         logging.config.fileConfig('logging.conf')
         self.logger = logging.getLogger('pokerlite')
 
@@ -87,20 +91,20 @@ class Game:
         # You can check or bet
         match[last_record["Bet_Type"]]:
             case["Ante"]:
-                return "Opening Play"
+                return "Dealer Opens"
             # Then test if the previous player has checked
             # You can check or bet
             case["Check"]:
-                return "Opening after Check Play"
+                return "Non-Dealer Opens after Dealer Checks"
             # Then test the player's last play to test the type of bet being requested
             # You must fold, see, or raise if the maximum number of raises is not exceeded
             case["Open"]:
                 if last_played == "Ante":
                     # Player has not played this round => responding to an open bet
-                    return "See after Open"
+                    return "Non-Dealer Sees after Dealer Opens"
                 elif last_played == "Check":
                     # Player has previously checked => responding to an opening bet after a check 
-                    return "See after Opening following Check"
+                    return "Dealer Sees after Non-Dealer Opens after Dealer Checks"
                 else:
                     # Player has previously played but not checked (and is not the closing player) => responding to a bet after a player has raised
                     return "Bet after Raise"
@@ -405,14 +409,9 @@ class Game:
         Plays the game.
         """
         # Record the game start
-        self.game_records.append({
-            "Game_Id": self.game_id,
-            "Round_Number": 0,
-            "Pot": 0,
-            "Description": "Game Start",
-            "Player": "",
-            "Value": 0
-        })
+        self.game_records[0]["Game_Id"] = self.game_id
+
+        # Play rounds
         round_number = 1
         pot = 0 
         while round_number <= self.NUMBER_ROUNDS:
@@ -422,8 +421,7 @@ class Game:
         # Print the game closing balances
         print(f"The game final pot is: {pot} coins")
         for player in self.players:
-            print(f"Player {player.name} game final balance is: {player.cash_balance} coins")
-
+            print(f"Player {player.name} game final gain per round is: {round(player.cash_balance / self.NUMBER_ROUNDS, 2)} coins")
         self.logger.debug(f"Game over after {self.NUMBER_ROUNDS} rounds")
 
     def __repr__(self) -> str:
@@ -433,5 +431,5 @@ if __name__ == "__main__":
     game_id: str = datetime.now().strftime("%d-%b-%Y %H:%M:%S")
     game = Game(game_id)
     game.play()
-    # if game.logger.getEffectiveLevel() == logging.DEBUG: 
-    # print_records(game.game_records)
+    if game.logger.getEffectiveLevel() == logging.DEBUG: 
+        print_records(game.game_records)

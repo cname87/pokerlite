@@ -8,18 +8,17 @@ Author: Seán Young
 from __future__ import annotations
 from typing import Literal, TypedDict
 
-
 #############################################
 # Set the game configuration parameters here
 
 # The file names of all player code files
 ALL_PLAYER_FILES: list[str] = ["player1", "player2", "player3", "player4"]
 # Two to four of the numbers 1, 2, 3, 4 corresponding to th 4 players in ALL_PLAYER_FILES
-CURRENT_PLAYER_FILE_NUMBERS: list[int] = [2, 4]
+CURRENT_PLAYER_FILE_NUMBERS: list[int] = [1, 4]
 # The name of the class to be defined in each player file 
 PLAYER_CLASS = "PlayerCode"
 # The game consists of this many betting rounds
-NUMBER_ROUNDS: int = 1_000_000
+NUMBER_ROUNDS: int = 100_000
  # Each player gets a card with a number between 1 and this value
 CARD_HIGH_NUMBER = 9
 # Ante amount paid into the pot at the start of each betting round by each player
@@ -63,7 +62,13 @@ GAME_CONFIG: GameConfig = {
 # Define various custom types
 TypeForGameState = Literal["Game Start", "Card", "Ante", "Round Start", "Checked", "Win"]
 TypeForBetType = Literal["Ante", "Check", "Open", "See", "Raise", "Fold"]
-TypeForPlayState = Literal["Opening Play", "Opening after Check Play", "See after Open", "See after Opening following Check", "Bet after Raise", "End Game"]
+TypeForPlayState = Literal["Dealer Opens", "Non-Dealer Opens after Dealer Checks", "Non-Dealer Sees after Dealer Opens", "Dealer Sees after Non-Dealer Opens after Dealer Checks", "Bet after Raise", "End Game"]
+
+class Strategy(TypedDict):
+    Dealer_Opens: list[dict[str, float]]
+    Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks: list[dict[str, float]]
+    Non_Dealer_Sees_after_Dealer_Opens: list[dict[str, float]]
+    Non_Dealer_Opens_after_Dealer_Checks: list[dict[str, float]]
 
 # Define type for a record of betting activity in a betting round
 class RoundRecord(TypedDict):
@@ -81,3 +86,13 @@ class GameRecord(TypedDict):
     Description: TypeForGameState | TypeForBetType
     Player: str
     Value: int
+
+# Initialize the game data list
+game_records: list[GameRecord] = [{
+    "Game_Id": "",
+    "Round_Number": 0,
+    "Pot": 0,
+    "Description": "Game Start",
+    "Player": "",
+    "Value": 0
+}]
