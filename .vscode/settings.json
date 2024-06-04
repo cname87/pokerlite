@@ -1,5 +1,4 @@
 {
-    "cSpell.words": [
-        "WIP"
-    ]
+    // Set to allow very long terminal output
+    "terminal.integrated.scrollback": 100000,
 }
