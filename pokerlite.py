@@ -56,6 +56,7 @@ class Game:
         self.MAX_BET_OR_RAISE = GAME_CONFIG["MAX_BET_OR_RAISE"]
         self.CARD_HIGH_NUMBER = GAME_CONFIG["CARD_HIGH_NUMBER"]
         self.MAX_RAISES = GAME_CONFIG["MAX_RAISES"]
+        self.IS_CARRY_POT = GAME_CONFIG["IS_CARRY_POT"]
         # A list of dictionary elements storing betting data from each betting round
         self.game_records: list[GameRecord] = game_records
 
@@ -72,7 +73,7 @@ class Game:
     
     def round_state(self, round_data: list[RoundRecord], player_name: str) -> TypeForPlayState:
         # Find the player's last play
-    
+        
         def find_last_record_with_value(records: list[RoundRecord], field_to_find: str, value_to_test: str, field_to_return: str) -> str | None :
             # Utility function to find the bet type associated with the last player record in the round data record list
             for record in reversed(records):
@@ -82,28 +83,29 @@ class Game:
     
         last_record = round_data[-1]
         last_played = find_last_record_with_value(
-            field_to_find="Player",
             records=round_data,
+            field_to_find="Player",
             value_to_test=player_name,
             field_to_return="Bet_Type"
         )
-        # First test if this is an opening bet
-        # You can check or bet
+        # Test the last record
         match[last_record["Bet_Type"]]:
+            # First test if this is an opening bet as the last play was laying an ante
             case["Ante"]:
                 return "Dealer Opens"
-            # Then test if the previous player has checked
-            # You can check or bet
+            # Then test if the previous play was a check
             case["Check"]:
+                # NOTE: Assumes a 2 player game 
                 return "Non-Dealer Opens after Dealer Checks"
-            # Then test the player's last play to test the type of bet being requested
-            # You must fold, see, or raise if the maximum number of raises is not exceeded
+            # Then test if the previous play was an opening bet
             case["Open"]:
+                # Test the player's last play was laying an ante
                 if last_played == "Ante":
                     # Player has not played this round => responding to an open bet
                     return "Non-Dealer Sees after Dealer Opens"
                 elif last_played == "Check":
-                    # Player has previously checked => responding to an opening bet after a check 
+                    # Player previously checked => responding to an opening bet after a check
+                    # NOTE: Assumes a 2 player game  
                     return "Dealer Sees after Non-Dealer Opens after Dealer Checks"
                 else:
                     # Player has previously played but not checked (and is not the closing player) => responding to a bet after a player has raised
@@ -182,7 +184,7 @@ class Game:
                 bet = betting_player.take_bet(
                     required_bet=required_bet, 
                     pot=pot,
-                    betting_state = betting_state,
+                    betting_state=betting_state,
                     round_data=round_data,
                     is_raise_allowed=is_raise_allowed
                 )
@@ -197,35 +199,35 @@ class Game:
                         if required_bet == 0:
                             # Opening bet and player checked - no action
                             bet_type = "Check"
-                            self.logger.debug(f"Player {betting_player.name} has checked")
+                            self.logger.debug(f"{betting_player.name} has checked")
                         else:
                             # Folds - no bet
                             # Remove the player from the list of players so they are not included in the round or when the winner is determined
                             bet_type = "Fold"
                             player_order.pop(i)
                             self.logger.debug(f"Player {betting_player.name} has folded")
-                        self.logger.debug(f"Player {betting_player.name} balance is: {betting_player.cash_balance} coins")
+                        self.logger.debug(f"{betting_player.name} balance is: {betting_player.cash_balance} coins")
                     case n if n > 0 and n < required_bet:
                         # Invalid bet - the player must see the current required bet as a minimum
                         raise ValueError(f"Invalid bet of {n} - less than the minimum required")
                     case n if n == required_bet:
                         bet_type = "See"
                         # Sees - the player bets the required bet
-                        self.logger.debug(f"Player {betting_player.name} has seen the bet by betting {bet}")
+                        self.logger.debug(f"{betting_player.name} has seen the bet by betting {bet}")
                         # Update the player bet running total so future required bets can be determined
                         betting_player.bet_running_total += bet
                         # Update the total bet amount so the pot can be updated later 
                         pot += bet
-                        self.logger.debug(f"Player {betting_player.name} balance is: {betting_player.cash_balance} coins")
+                        self.logger.debug(f"{betting_player.name} balance is: {betting_player.cash_balance} coins")
                     case n if n > required_bet:
                         if required_bet == 0:
                             # Opening bet and player opened
                             bet_type = "Open"
-                            self.logger.debug(f"Player {betting_player.name} has opened with a bet of {n}")
+                            self.logger.debug(f"{betting_player.name} has opened with a bet of {n}")
                         else:
                             bet_type = "Raise"
                             # Raises - the player sees the required bet but also raises above that amount
-                            self.logger.debug(f"Player {betting_player.name} has raised above the required bet of {required_bet} with a bet of {n}")
+                            self.logger.debug(f"{betting_player.name} has raised above the required bet of {required_bet} with a bet of {n}")
                             # Increment the count of raises and test if the limit has been reached
                             number_raises += 1
                             if number_raises == self.MAX_RAISES:
@@ -234,7 +236,7 @@ class Game:
                         # Since the player has opened or raised, reset the closing player to the player who bet just before the betting player
                         closing_player = player_order[(i + 1) % len(player_order)]
                         self.logger.debug(f"The closing player is {closing_player.name}")
-                        self.logger.debug(f"Player {betting_player.name} balance is: {betting_player.cash_balance} coins")
+                        self.logger.debug(f"{betting_player.name} balance is: {betting_player.cash_balance} coins")
                         # Update the player bet running total so future required bets can be determined
                         betting_player.bet_running_total += n
                         # Update the total bet amount so the pot can be updated later 
@@ -290,6 +292,7 @@ class Game:
         })
         
         # A pot is only fed in following a checked game or games
+        # The carried in pot will equal the number of checked games by number of players multiplied by the ante
         num_checked_games: int = pot // (len(self.players) * self.ANTE_BET)
 
         # Create a deck of cards from 1 to card_high_number
@@ -297,6 +300,7 @@ class Game:
         
         # Rotate the dealer player each round
         first_player_index = (round_number) % len(self.players) - 1
+        # first_player_index = 0
         player_order = self.player_order(self.players[first_player_index])
 
         # The deal is a set of random numbers, one for each player
@@ -311,7 +315,7 @@ class Game:
             # Deduct the ante from each player
             player_order[i].place_bet(self.ANTE_BET)
             pot += self.ANTE_BET
-            self.logger.debug(f"Player {player_order[i].name} balance is: {player_order[i].cash_balance} coins")
+            self.logger.debug(f"{player_order[i].name} balance is: {player_order[i].cash_balance} coins")
             self.logger.debug(f"The pot is: {pot} coins")
             
             # Record the ane bets
@@ -327,7 +331,7 @@ class Game:
         self.logger.debug("Dealing the cards...")
         for i in range(0, len(player_order)):
             player_order[i].card = deal[i]
-            self.logger.debug(f"Player {player_order[i].name} card number is {player_order[i].card.value}.")
+            self.logger.debug(f"{player_order[i].name} card number is {player_order[i].card.value}.")
 
         # Take the bets 
         self.logger.debug("Taking the bets...")
@@ -370,21 +374,27 @@ class Game:
             winner: Player = max(remaining_players, key=lambda player: player.card)
             self.logger.debug(f"The winner is Player {winner.name}")
             winner.collect_winnings(pot)
+            
             self.game_records.append({
                 "Game_Id": self.game_id,
                 "Round_Number": round_number,
                 "Pot": pot,
                 "Description": "Win",
                 "Player": winner.name,
+                # The player has won the pot less what the player has bet less their ante contribution to the game and previous checked games
                 "Value": pot - winner.bet_running_total - (self.ANTE_BET * (num_checked_games + 1)) 
             })
             num_checked_games = 0
             pot = 0
         else:
-            # Otherwise the pot is passed to the next betting round
-            for player in betting_round_return["Remaining Players"]:
-                player.cash_balance += self.ANTE_BET
-            pot = 0
+            # Otherwise, depending on the configuration, the pot is passed to the next betting round or returned to the players
+            if self.IS_CARRY_POT:
+                # The pot is returned to be carried to the next round
+                pass
+            else:
+                for player in betting_round_return["Remaining Players"]:
+                    player.cash_balance += self.ANTE_BET
+                pot = 0
             self.game_records.append({
                 "Game_Id": self.game_id,
                 "Round_Number": round_number,
@@ -398,7 +408,7 @@ class Game:
         # Print the round closing balances
         self.logger.debug(f"The round closing pot is: {pot} coins")
         for i in range(0, len(self.players)):
-            self.logger.debug(f"Player {self.players[i].name} round closing balance is: {self.players[i].cash_balance} coins")
+            self.logger.debug(f"{self.players[i].name} round closing balance is: {self.players[i].cash_balance} coins")
 
         self.logger.debug("Round over")
         
@@ -413,16 +423,20 @@ class Game:
 
         # Play rounds
         round_number = 1
-        pot = 0 
+        pot = 0
+        num_carries: int = 0
         while round_number <= self.NUMBER_ROUNDS:
             pot = self.play_round(round_number, pot)
             round_number += 1
+            if pot > 0:
+                num_carries += 1
 
         # Print the game closing balances
-        print(f"The game final pot is: {pot} coins")
         for player in self.players:
-            print(f"Player {player.name} game final gain per round is: {round(player.cash_balance / self.NUMBER_ROUNDS, 2)} coins")
+            print(f"{player.name} game final gain per round is: {round(player.cash_balance / self.NUMBER_ROUNDS, 2)} coins")
+        print(f"The game final pot per round is: {round(pot/self.NUMBER_ROUNDS,2)} coins")
         self.logger.debug(f"Game over after {self.NUMBER_ROUNDS} rounds")
+        self.logger.debug(f"The number of carries was {num_carries}")
 
     def __repr__(self) -> str:
         return "PokerLite with " + " ".join(player.name for player in self.players)

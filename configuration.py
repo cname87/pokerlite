@@ -18,7 +18,7 @@ CURRENT_PLAYER_FILE_NUMBERS: list[int] = [1, 4]
 # The name of the class to be defined in each player file 
 PLAYER_CLASS = "PlayerCode"
 # The game consists of this many betting rounds
-NUMBER_ROUNDS: int = 1_000_000
+NUMBER_ROUNDS: int = 100_000
  # Each player gets a card with a number between 1 and this value
 CARD_HIGH_NUMBER = 9
 # Ante amount paid into the pot at the start of each betting round by each player
@@ -29,6 +29,8 @@ MIN_BET_OR_RAISE: int = 10 * ANTE_BET
 MAX_BET_OR_RAISE: int = 1 * MIN_BET_OR_RAISE
 # Number of raises allowed
 MAX_RAISES: int = 0
+# Carry the pot when a game is checked or give the pot back to the players
+IS_CARRY_POT = True
 
 #############################################
 
@@ -47,6 +49,7 @@ class GameConfig(TypedDict):
     MIN_BET_OR_RAISE: int
     MAX_BET_OR_RAISE: int
     MAX_RAISES: int
+    IS_CARRY_POT: bool
 
 GAME_CONFIG: GameConfig = {
     "PLAYER_FILES": current_player_files,
@@ -56,7 +59,8 @@ GAME_CONFIG: GameConfig = {
     "ANTE_BET": ANTE_BET, 
     "MIN_BET_OR_RAISE": MIN_BET_OR_RAISE,
     "MAX_BET_OR_RAISE": MAX_BET_OR_RAISE,
-    "MAX_RAISES": MAX_RAISES
+    "MAX_RAISES": MAX_RAISES,
+    "IS_CARRY_POT": IS_CARRY_POT
 }
 
 # Define various custom types
