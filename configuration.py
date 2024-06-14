@@ -27,6 +27,13 @@ ANTE_BET: int = 10
 OPEN_BET_OPTIONS: list[int] = [ANTE_BET * multiple for multiple in [2, 3, 4]]
 # Allowed multiples of the ante bet that can be added to the previous bet on raising
 RAISE_BET_OPTIONS: list[int] = [ANTE_BET * multiple for multiple in [1, 2]]
+=======
+# Minimum opening bet, also minimum raise bet, (i.e., amount above that required to see the previous bet)
+MIN_BET_OR_RAISE: int = 2 * ANTE_BET
+BET_OPTIONS: list[int]: [2, 4] 
+# Maximum opening bet, also maximum raise bet, (i.e., amount above that required to see the previous bet)
+MAX_BET_OR_RAISE: int = 1 * MIN_BET_OR_RAISE
+>>>>>>> b6059237ede175e2868ae3e59873ac0d11fe55d0
 # Number of raises allowed
 MAX_RAISES: int = 0
 # Carry the pot when a game is checked or give the pot back to the players
