@@ -318,7 +318,56 @@ def run_simulation() -> None:
     # Lists of strategies for looping. Player will take the action if their card is in a strategy list.
 
     # Possible strategies for player 1 when player 1 opens first
-    dealer_open_cards_list = [
+    player1_dealer_open_cards_list = [
+        # [9],
+        # [8,9],
+        [7,8,9],
+        # [6,7,8,9],
+        # [5,6,7,8,9],
+        # [4,5,6,7,8,9],
+        # [3,4,5,6,7,8,9],
+        # [2,3,4,5,6,7,8,9],
+        # [1,2,3,4,5,6,7,8,9]
+    ]
+    # Possible strategies for player 1 when they have checked instead of opening and player 2 has opened.
+    player1_dealer_see_after_check_and_other_bets_cards_list = [
+        # [9],
+        # [8,9],
+        [7,8,9],
+        # [6,7,8,9],
+        # [5,6,7,8,9],
+        # [4,5,6,7,8,9],
+        # [3,4,5,6,7,8,9],
+        # [2,3,4,5,6,7,8,9],
+        # [1,2,3,4,5,6,7,8,9]
+    ]
+
+    # Possible strategies for player 1 when player 2 opens first    
+    player1_non_dealer_see_after_other_opens_cards_list = [
+        # [9],
+        [8,9],
+        # [7,8,9],
+        # [6,7,8,9],
+        # [5,6,7,8,9],
+        # [4,5,6,7,8,9],
+        # [3,4,5,6,7,8,9],
+        # [2,3,4,5,6,7,8,9],
+        # [1,2,3,4,5,6,7,8,9]
+    ]
+    # Possible strategies for player 1 when player 2 opens first but checks instead of opening
+    player1_non_dealer_open_after_other_checks_cards_list = [
+        # [9],
+        [8,9],
+        # [7,8,9],
+        # [6,7,8,9],
+        # [5,6,7,8,9],
+        # [4,5,6,7,8,9],
+        # [3,4,5,6,7,8,9],
+        # [2,3,4,5,6,7,8,9],
+        # [1,2,3,4,5,6,7,8,9]
+    ]
+    # Possible strategies for player 2 when player 2 opens first
+    player2_dealer_open_cards_list = [
         [9],
         # [8,9],
         # [7,8,9],
@@ -329,8 +378,8 @@ def run_simulation() -> None:
         # [2,3,4,5,6,7,8,9],
         # [1,2,3,4,5,6,7,8,9]
     ]
-    # Possible strategies for player 1 when they have checked instead of opening and player 2 has opened.
-    dealer_see_after_check_and_other_bets_cards_list = [
+    # Possible strategies for player 2 when they have checked instead of opening and player 2 has opened.
+    player2_dealer_see_after_check_and_other_bets_cards_list = [
         [9],
         # [8,9],
         # [7,8,9],
@@ -342,9 +391,9 @@ def run_simulation() -> None:
         # [1,2,3,4,5,6,7,8,9]
     ]
     # Possible strategies for player 2 when player 1 opens first
-    non_dealer_see_after_other_opens_cards_list = [
-        # [9],
-        [8,9],
+    player2_non_dealer_see_after_other_opens_cards_list = [
+        [9],
+        # [8,9],
         # [7,8,9],
         # [6,7,8,9],
         # [5,6,7,8,9],
@@ -354,9 +403,9 @@ def run_simulation() -> None:
         # [1,2,3,4,5,6,7,8,9]
     ]
     # Possible strategies for player 2 when player 1 opens first but checks instead of opening
-    non_dealer_open_after_other_checks_cards_list = [
-        # [9],
-        [8,9],
+    player2_non_dealer_open_after_other_checks_cards_list = [
+        [9],
+        # [8,9],
         # [7,8,9],
         # [6,7,8,9],
         # [5,6,7,8,9],
@@ -366,12 +415,26 @@ def run_simulation() -> None:
         # [1,2,3,4,5,6,7,8,9]
     ]
 
+    # Track player wins and round carries across both deals
+    player1_dealer_player1_win_ratio: float = 0
+    player1_dealer_player2_win_ratio: float = 0
+    player1_dealer_carry_ratio: float = 0
+    player2_dealer_player2_win_ratio: float = 0
+    player2_dealer_player1_win_ratio: float = 0
+    player2_dealer_carry_ratio: float = 0
+    tot_player1_wins: int = 0
+    tot_player2_wins: int = 0
+    tot_player1_gain: int = 0
+    tot_player2_gain: int = 0
+    tot_pot_carries: int = 0
+    tot_pot_returns: int = 0
+
     # Holds the best strategy for the dealer for each non-dealer strategy
     dealer_best_strategies_per_non_dealer_strategy_list: list[dict[str, float | list[int] | list[float]]] = []
     
     # Define the non-dealer strategy to be tested against
-    for non_dealer_see_after_other_opens_cards_from_list in non_dealer_see_after_other_opens_cards_list:
-        for non_dealer_open_after_other_checks_cards_from_list in non_dealer_open_after_other_checks_cards_list:
+    for non_dealer_see_after_other_opens_cards_from_list in player2_non_dealer_see_after_other_opens_cards_list:
+        for non_dealer_open_after_other_checks_cards_from_list in player2_non_dealer_open_after_other_checks_cards_list:
 
             # Reset the parameters used in the inner loop test 
             dealer_max_gain: float =-100_000
@@ -383,8 +446,8 @@ def run_simulation() -> None:
             dealer_strategy_and_one_non_dealer_strategy_list: list[dict[str, float | list[list[int]]]] = []
             
             # Test every possible dealer combination and select the one with the most gain
-            for dealer_open_cards_from_list in dealer_open_cards_list:
-                for dealer_see_after_check_then_other_bets_cards_from_list in dealer_see_after_check_and_other_bets_cards_list:
+            for dealer_open_cards_from_list in player1_dealer_open_cards_list:
+                for dealer_see_after_check_then_other_bets_cards_from_list in player1_dealer_see_after_check_and_other_bets_cards_list:
 
                     # Run every possible card combination, all equally likely and sum winnings over all
                     pot = 0
@@ -464,12 +527,22 @@ def run_simulation() -> None:
                                         num_pot_returns += 1
 
                     assert num_deals == num_dealer_wins + num_non_dealer_wins + num_pot_carries + num_pot_returns, "Deal count error"
+                    player1_dealer_player1_win_ratio = num_dealer_wins / num_deals
+                    player1_dealer_player2_win_ratio = num_non_dealer_wins / num_deals
+                    player1_dealer_carry_ratio = num_pot_carries / num_deals
+                    tot_player1_wins += num_dealer_wins
+                    tot_player2_wins += num_non_dealer_wins
+                    tot_player1_gain += dealer_cash
+                    tot_player2_gain += non_dealer_cash
+                    tot_pot_carries += num_pot_carries
+                    tot_pot_returns += num_pot_returns
                     print(f"Num dealer wins: {num_dealer_wins}")
                     print(f"Num non-dealer wins: {num_non_dealer_wins}")
                     print(f"Num pots carried: {num_pot_carries}")
                     print(f"Num pots returned: {num_pot_returns}")
+
                     tot_pot_carried = num_pot_carries * (2 * ante)
-                    # Set u p the pot total equivalent to the carried pot
+                    # Set up the pot total equivalent to the carried pot
                     dealer_cash -= int(num_pot_carries * ante)
                     non_dealer_cash -= int(num_pot_carries * ante)
                     # Divide carried pot between players
@@ -521,8 +594,8 @@ def run_simulation() -> None:
     # Holds the best strategy for the non-dealer for each dealer strategy
     non_dealer_best_strategies_per_dealer_strategy_list: list[dict[str, float | list[int] | list[float]]] = []
 
-    for dealer_open_cards_from_list in dealer_open_cards_list:
-        for dealer_see_after_check_then_other_bets_cards_from_list in dealer_see_after_check_and_other_bets_cards_list:
+    for dealer_open_cards_from_list in player2_dealer_open_cards_list:
+        for dealer_see_after_check_then_other_bets_cards_from_list in player2_dealer_see_after_check_and_other_bets_cards_list:
 
             # Reset player gain each test 
             non_dealer_max_gain: float =-100_000
@@ -534,8 +607,8 @@ def run_simulation() -> None:
             non_dealer_strategy_and_one_dealer_strategy_list: list[dict[str, float | list[list[int]]]] = []
                         
             # Test every possible non-dealer combination and select the one with the most gain
-            for non_dealer_see_after_other_opens_cards_from_list in non_dealer_see_after_other_opens_cards_list:
-                for non_dealer_open_after_other_checks_cards_from_list in non_dealer_open_after_other_checks_cards_list:
+            for non_dealer_see_after_other_opens_cards_from_list in player1_non_dealer_see_after_other_opens_cards_list:
+                for non_dealer_open_after_other_checks_cards_from_list in player1_non_dealer_open_after_other_checks_cards_list:
 
                     # Run every possible card combination, all equally likely and sum winnings over all
                     pot = 0
@@ -615,6 +688,19 @@ def run_simulation() -> None:
                                         num_pot_returns += 1
 
                     assert num_deals == num_dealer_wins + num_non_dealer_wins + num_pot_carries + num_pot_returns, "Deal count error"
+                    player2_dealer_player2_win_ratio = num_dealer_wins / num_deals
+                    player2_dealer_player1_win_ratio = num_non_dealer_wins / num_deals
+                    player2_dealer_carry_ratio = num_pot_carries / num_deals
+                    tot_player1_wins += num_non_dealer_wins
+                    tot_player2_wins += num_dealer_wins
+                    tot_player1_gain += non_dealer_cash
+                    tot_player2_gain += dealer_cash
+                    tot_pot_carries += num_pot_carries
+                    tot_pot_returns += num_pot_returns
+                    print(f"Num dealer wins: {num_dealer_wins}")
+                    print(f"Num non-dealer wins: {num_non_dealer_wins}")
+                    print(f"Num pots carried: {num_pot_carries}")
+                    print(f"Num pots returned: {num_pot_returns}")
 
                     tot_pot_carried = num_pot_carries * (2 * ante)
                     # Set up the pot total equivalent to the carried pot
@@ -657,12 +743,39 @@ def run_simulation() -> None:
                 "Non-Dealer Best Open Strategy": non_dealer_open_after_other_checks_cards_max,
             }
             non_dealer_best_strategies_per_dealer_strategy_list.append(non_dealer_best_strategy_per_non_dealer_strategy_dict)
+
+
+    tot_pot_carried = tot_pot_carries * (2 * ante)
+    # Set up the pot total equivalent to the carried pot
+    tot_player1_gain -= int(tot_pot_carries * ante)
+    tot_player2_gain -= int(tot_pot_carries * ante)
+    # Divide carried pot between players
+    
+    player1_gross_carry = 1 / (1 - player2_dealer_carry_ratio)
+    player2_gross_carry = 1 / (1 - player1_dealer_carry_ratio)
+    player1_win = (player1_gross_carry * player1_dealer_player1_win_ratio) + (player2_gross_carry * player2_dealer_player1_win_ratio)
+    player2_win = (player1_gross_carry * player1_dealer_player2_win_ratio) + (player2_gross_carry * player2_dealer_player2_win_ratio)
+    player1_carry_win_ratio = player1_win / (player1_win + player2_win)
+    player2_carry_win_ratio = player2_win / (player1_win + player2_win)
+    
+    print(player1_carry_win_ratio)
+    print(player2_carry_win_ratio)
+    tot_player1_gain += int(tot_pot_carried * player1_carry_win_ratio)
+    tot_player2_gain += int(tot_pot_carried * player2_carry_win_ratio)
+
+    print("\n")
+    print(f"Total player 1 wins: {tot_player1_wins}")
+    print(f"Total player 2 wins: {tot_player2_wins}")
+    print(f"Total player 1 gain: {round(tot_player1_gain / (2 * 72),2)}")
+    print(f"Total player 2 gain: {round(tot_player2_gain / (2 * 72),2)}")
+    print(f"Total pot carries: {tot_pot_carries}")
+    print(f"Total pot returns: {tot_pot_returns}")
     
     # Sort the list by 'code' and 'sum'
     non_dealer_best_strategies_per_dealer_strategy_list.sort(key=lambda x:x['Non-Dealer Max Gain'], reverse=True)
     # For each dealer strategy print the optimum non-dealer strategy
     print("\n")
-    print(f"Each possible dealer strategy with the npn-dealer strategy that maximizes non-dealer gain")
+    print(f"Each possible dealer strategy with the non-dealer strategy that maximizes non-dealer gain")
     print_records(non_dealer_best_strategies_per_dealer_strategy_list)
     print("\n")
 

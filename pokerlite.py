@@ -45,7 +45,7 @@ class Game:
         player_class_name = GAME_CONFIG["PLAYER_CLASS"]
         self.players: list[Player] = []
         for file_name in GAME_CONFIG["PLAYER_FILES"]:
-            # Import the player module, get the Player class and create an instance of it    
+            # Import the player module, get the Player class and create an instance of it  
             player: Player = getattr(import_module(file_name), player_class_name)()
             self.players.append(player)
         # Store game configuration data
