@@ -55,7 +55,7 @@ class PlayerCode(Player):
                     player_bet_cards: list[int] = self.get_strategy_list(self.strategy["Dealer_Opens"])
                     self.logger.debug(f"The playing cards are: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
-                        bet = Player.get_CONFIG()["MIN_BET_OR_RAISE"] # Bet
+                        bet = Player.get_CONFIG()["OPEN_BET_OPTIONS"][0] # Bet
                         self.logger.debug(f"{self.name} bets: {bet}")
                     else:
                         bet = 0 # Check
@@ -82,7 +82,7 @@ class PlayerCode(Player):
                     player_bet_cards: list[int] = self.get_strategy_list(self.strategy["Non_Dealer_Opens_after_Dealer_Checks"])
                     self.logger.debug(f"The playing cards are: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
-                        bet = Player.get_CONFIG()["MIN_BET_OR_RAISE"] # Bet
+                        bet = Player.get_CONFIG()["OPEN_BET_OPTIONS"][0] # Bet
                         self.logger.debug(f"{self.name} bets: {bet}")
                     else:
                         bet = 0 # Check

@@ -101,9 +101,8 @@ class Player(ABC):
         This function returns the bet amount as determined by the player"s game play.
         The bet returned can be 0 which corresponds to the player checking (not betting) for an opening bet and folding otherwise.
         required_bet will be 0 for the opening bet of the game
-        If betting the returned bet must be equal to or greater than self.MIN_BET_OR_RAISE, and less than self.MAX_BET_OR_RAISE.
-        Also any raise bet (i.e., the excess above required_bet) must be greater than, or equal to, self.MIN_BET_OR_RAISE,
-        and less than self.MAX_BET_OR_RAISE. 
+        If betting the returned bet must be one of the amounts in self.OPEN_BET_OPTIONS.
+        Also any raise bet (i.e., the excess above required_bet) must be one of the amounts in self.OPEN_BET_OPTIONS
         A raise bet can only be returned if "is_raise_allowed" is true. 
         Exceptions will be thrown is the bet returned fails the specified conditions.
         Args:

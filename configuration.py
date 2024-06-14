@@ -23,10 +23,10 @@ NUMBER_ROUNDS: int = 100_000
 CARD_HIGH_NUMBER = 9
 # Ante amount paid into the pot at the start of each betting round by each player
 ANTE_BET: int = 10
-# Minimum opening bet, also minimum raise bet, (i.e., amount above that required to see the previous bet)
-MIN_BET_OR_RAISE: int = 10 * ANTE_BET
-# Maximum opening bet, also maximum raise bet, (i.e., amount above that required to see the previous bet)
-MAX_BET_OR_RAISE: int = 1 * MIN_BET_OR_RAISE
+# Allowed multiples of the ante bet that can be bet on opening
+OPEN_BET_OPTIONS: list[int] = [ANTE_BET * multiple for multiple in [2, 3, 4]]
+# Allowed multiples of the ante bet that can be added to the previous bet on raising
+RAISE_BET_OPTIONS: list[int] = [ANTE_BET * multiple for multiple in [1, 2]]
 # Number of raises allowed
 MAX_RAISES: int = 0
 # Carry the pot when a game is checked or give the pot back to the players
@@ -46,8 +46,8 @@ class GameConfig(TypedDict):
     NUMBER_ROUNDS: int
     CARD_HIGH_NUMBER: int
     ANTE_BET: int
-    MIN_BET_OR_RAISE: int
-    MAX_BET_OR_RAISE: int
+    OPEN_BET_OPTIONS: list[int]
+    RAISE_BET_OPTIONS: list[int]
     MAX_RAISES: int
     IS_CARRY_POT: bool
 
@@ -57,8 +57,8 @@ GAME_CONFIG: GameConfig = {
     "NUMBER_ROUNDS": NUMBER_ROUNDS,
     "CARD_HIGH_NUMBER": CARD_HIGH_NUMBER,
     "ANTE_BET": ANTE_BET, 
-    "MIN_BET_OR_RAISE": MIN_BET_OR_RAISE,
-    "MAX_BET_OR_RAISE": MAX_BET_OR_RAISE,
+    "OPEN_BET_OPTIONS": OPEN_BET_OPTIONS,
+    "RAISE_BET_OPTIONS": RAISE_BET_OPTIONS,
     "MAX_RAISES": MAX_RAISES,
     "IS_CARRY_POT": IS_CARRY_POT
 }

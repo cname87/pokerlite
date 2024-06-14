@@ -12,7 +12,7 @@ logger = logging.getLogger('utility')
 
 from typing import Any
 from collections import defaultdict
-from configuration import GameConfig, CARD_HIGH_NUMBER
+from configuration import GameConfig, CARD_HIGH_NUMBER, ANTE_BET, OPEN_BET_OPTIONS
 
 # Utility function to validate bets
 def validate_bet(
@@ -28,11 +28,11 @@ def validate_bet(
         raise ValueError(f"The bet of {bet} does not meet the required bet {required_bet} to see the incoming bet")
     if required_bet != 0 and bet > required_bet and is_raise_allowed != True:
         raise ValueError(f"The bet of {bet} is a raise above {required_bet} which is disallowed")
-    if required_bet == 0 and bet != 0 and (bet < game_config["MIN_BET_OR_RAISE"] or bet > game_config["MAX_BET_OR_RAISE"]):
-        raise ValueError(f"The opening bet of {bet} was outside the min {game_config["MIN_BET_OR_RAISE"]} or max {game_config["MAX_BET_OR_RAISE"]} bet limits")
+    if required_bet == 0 and bet != 0 and (bet < game_config["OPEN_BET_OPTIONS"][0] or bet > game_config["RAISE_BET_OPTIONS"][-1]):
+        raise ValueError(f"The opening bet of {bet} was outside the min {game_config["OPEN_BET_OPTIONS"][0]} or max {game_config["RAISE_BET_OPTIONS"][-1]} bet limits")
     if required_bet > 0 and bet != 0 and bet != required_bet \
-    and (bet - required_bet < game_config["MIN_BET_OR_RAISE"] or bet - required_bet > game_config["MAX_BET_OR_RAISE"]):
-        raise ValueError(f"The difference between the bet of {bet} and the required bet {required_bet} was outside the min {game_config["MIN_BET_OR_RAISE"]} or max {game_config["MAX_BET_OR_RAISE"]} bet limits")
+    and (bet - required_bet < game_config["OPEN_BET_OPTIONS"][0] or bet - required_bet > game_config["RAISE_BET_OPTIONS"][-1]):
+        raise ValueError(f"The difference between the bet of {bet} and the required bet {required_bet} was outside the min {game_config["OPEN_BET_OPTIONS"][0]} or max {game_config["RAISE_BET_OPTIONS"][-1]} bet limits")
 
 # Utility function to print list of records of type Round_Record or Game_Record
 def print_records(record_list: list[Any]) -> None:
@@ -291,12 +291,17 @@ def bet_cards(
         "Second Bet": second_bet_result
     }
 
+# print(opening_bet(20,100))
+# print(opening_bet_after_check(20,100))
+# print(bet_after_check(20,1000))
+# print(bet_cards(20, 100))
+
 def run_simulation() -> None:
 
     # Game parameters
-    ante: int = 10
+    ante: int = ANTE_BET
     pot: int = 0
-    bet: int = 10 * ante
+    bet: int = OPEN_BET_OPTIONS[0]
     dealer_cash: int = 0
     non_dealer_cash: int  = 0
     num_deals: int = 0
@@ -661,9 +666,5 @@ def run_simulation() -> None:
     print_records(non_dealer_best_strategies_per_dealer_strategy_list)
     print("\n")
 
-run_simulation()
-
-# print(opening_bet(20,100))
-# print(opening_bet_after_check(20,100))
-# print(bet_after_check(20,1000))
-# print(bet_cards(20, 100))
+if __name__ == "__main__":
+    run_simulation()
