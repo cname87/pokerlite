@@ -8,29 +8,42 @@ Author: Seán Young
 from __future__ import annotations
 from typing import Literal, TypedDict
 
+class Bet_Options(TypedDict):
+    Min: int
+    Med: int
+    Max: int
+
 #############################################
 # Set the game configuration parameters here
 
 # The file names of all player code files
 ALL_PLAYER_FILES: list[str] = ["player1", "player2", "player3", "player4"]
-# Two to four of the numbers 1, 2, 3, 4 corresponding to th 4 players in ALL_PLAYER_FILES
+# Two to four of the numbers 1, 2, 3, 4 corresponding to the 4 files in ALL_PLAYER_FILES
 CURRENT_PLAYER_FILE_NUMBERS: list[int] = [1, 4]
 # The name of the class to be defined in each player file 
 PLAYER_CLASS = "PlayerCode"
 # The game consists of this many betting rounds
-NUMBER_ROUNDS: int = 10_000
- # Each player gets a card with a number between 1 and this value
+NUMBER_ROUNDS: int = 100_000
+# Each player gets a card with a number between 1 and this value
 CARD_HIGH_NUMBER = 9
 # Ante amount paid into the pot at the start of each betting round by each player
 ANTE_BET: int = 10
-# Allowed multiples of the ante bet that can be bet on opening
-OPEN_BET_OPTIONS: list[int] = [ANTE_BET * multiple for multiple in [2, 3, 4]]
-# Allowed multiples of the ante bet that can be added to the previous bet on raising
-RAISE_BET_OPTIONS: list[int] = [ANTE_BET * multiple for multiple in [1, 2]]
+# Three allowed values for the opening bet
+OPEN_BET_OPTIONS: Bet_Options = {
+    "Min": ANTE_BET * 2,
+    "Med": ANTE_BET * 2,
+    "Max": ANTE_BET * 2,
+}
+# Three allowed amounts by which a bet can be raised
+RAISE_BET_OPTIONS: Bet_Options = {
+    "Min": ANTE_BET * 1,
+    "Med": ANTE_BET * 2,
+    "Max": ANTE_BET * 3,
+}
 # Number of raises allowed
 MAX_RAISES: int = 0
-# Carry the pot when a game is checked or give the pot back to the players
-IS_CARRY_POT = True
+# True to carry the pot when a game is checked, false to give the pot back to the players
+IS_CARRY_POT = False
 
 #############################################
 
@@ -46,8 +59,8 @@ class GameConfig(TypedDict):
     NUMBER_ROUNDS: int
     CARD_HIGH_NUMBER: int
     ANTE_BET: int
-    OPEN_BET_OPTIONS: list[int]
-    RAISE_BET_OPTIONS: list[int]
+    OPEN_BET_OPTIONS: Bet_Options
+    RAISE_BET_OPTIONS: Bet_Options
     MAX_RAISES: int
     IS_CARRY_POT: bool
 
@@ -68,8 +81,18 @@ TypeForGameState = Literal["Game Start", "Card", "Ante", "Round Start", "Checked
 TypeForBetType = Literal["Ante", "Check", "Open", "See", "Raise", "Fold"]
 TypeForPlayState = Literal["Dealer Opens", "Non-Dealer Opens after Dealer Checks", "Non-Dealer Sees after Dealer Opens", "Dealer Sees after Non-Dealer Opens after Dealer Checks", "Bet after Raise", "End Game"]
 
+# List of cards that will select the bet to be made
+class Dealer_Open_Bets(TypedDict):
+    # Opens with minimum allowed bet
+    Dealer_Opens_Min: list[dict[str, float]]
+    # Opens with the allowed bet between minimum and maximum
+    Dealer_Opens_Med: list[dict[str, float]]
+    # Opens with the maximum allowed bet
+    Dealer_Opens_Max: list[dict[str, float]]
+
+# List of card numbers that will trigger actions
 class Strategy(TypedDict):
-    Dealer_Opens: list[dict[str, float]]
+    Dealer_Opens_Bets: Dealer_Open_Bets
     Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks: list[dict[str, float]]
     Non_Dealer_Sees_after_Dealer_Opens: list[dict[str, float]]
     Non_Dealer_Opens_after_Dealer_Checks: list[dict[str, float]]

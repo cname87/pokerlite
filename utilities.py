@@ -28,11 +28,11 @@ def validate_bet(
         raise ValueError(f"The bet of {bet} does not meet the required bet {required_bet} to see the incoming bet")
     if required_bet != 0 and bet > required_bet and is_raise_allowed != True:
         raise ValueError(f"The bet of {bet} is a raise above {required_bet} which is disallowed")
-    if required_bet == 0 and bet != 0 and (bet < game_config["OPEN_BET_OPTIONS"][0] or bet > game_config["RAISE_BET_OPTIONS"][-1]):
-        raise ValueError(f"The opening bet of {bet} was outside the min {game_config["OPEN_BET_OPTIONS"][0]} or max {game_config["RAISE_BET_OPTIONS"][-1]} bet limits")
+    if required_bet == 0 and bet != 0 and (bet < game_config["OPEN_BET_OPTIONS"]["Min"] or bet > game_config["OPEN_BET_OPTIONS"]["Max"]):
+        raise ValueError(f"The opening bet of {bet} was outside the min {game_config["OPEN_BET_OPTIONS"]["Min"]} or max {game_config["OPEN_BET_OPTIONS"]["Max"]} bet limits")
     if required_bet > 0 and bet != 0 and bet != required_bet \
-    and (bet - required_bet < game_config["OPEN_BET_OPTIONS"][0] or bet - required_bet > game_config["RAISE_BET_OPTIONS"][-1]):
-        raise ValueError(f"The difference between the bet of {bet} and the required bet {required_bet} was outside the min {game_config["OPEN_BET_OPTIONS"][0]} or max {game_config["RAISE_BET_OPTIONS"][-1]} bet limits")
+    and (bet - required_bet < game_config["RAISE_BET_OPTIONS"]["Min"] or bet - required_bet > game_config["RAISE_BET_OPTIONS"]["Max"]):
+        raise ValueError(f"The difference between the bet of {bet} and the required bet {required_bet} was outside the min {game_config["OPEN_BET_OPTIONS"]["Min"]} or max {game_config["RAISE_BET_OPTIONS"]["Max"]} bet limits")
 
 # Utility function to print list of records of type Round_Record or Game_Record
 def print_records(record_list: list[Any]) -> None:

@@ -21,7 +21,7 @@ class PlayerCode(Player):
         self, 
         cash_balance: int = 0,
         strategy: Strategy =  {
-            "Dealer_Opens": [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 1.0}],
+            "Dealer_Opens_Min: [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 1.0}],
             "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks":  [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 1.0}, {"9": 1.0}],
             "Non_Dealer_Sees_after_Dealer_Opens": [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 1.0}],
             "Non_Dealer_Opens_after_Dealer_Checks":  [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 1.0}, {"9": 1.0}],
@@ -52,7 +52,7 @@ class PlayerCode(Player):
 
             match(betting_state):
                 case("Dealer Opens"):
-                    player_bet_cards: list[int] = self.get_strategy_list(self.strategy["Dealer_Opens"])
+                    player_bet_cards: list[int] = self.get_strategy_list(self.strategy["Dealer_Opens_Min])
                     self.logger.debug(f"The playing cards are: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
                         bet = Player.get_CONFIG()["OPEN_BET_OPTIONS"][0] # Bet

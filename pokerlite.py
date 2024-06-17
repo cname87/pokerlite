@@ -8,7 +8,7 @@ Version: 1.0
 """
 
 from __future__ import annotations
-from typing import Optional, TypedDict
+from typing import Any, Optional, TypedDict
 from datetime import datetime
 import random
 import logging
@@ -74,7 +74,7 @@ class Game:
     def round_state(self, round_data: list[RoundRecord], player_name: str) -> TypeForPlayState:
         # Find the player's last play
         
-        def find_last_record_with_value(records: list[RoundRecord], field_to_find: str, value_to_test: str, field_to_return: str) -> str | None :
+        def find_last_record_with_value(records: list[RoundRecord], field_to_find: str, value_to_test: str, field_to_return: str) -> Any | None :
             # Utility function to find the bet type associated with the last player record in the round data record list
             for record in reversed(records):
                 if record.get(field_to_find) == value_to_test:
@@ -153,7 +153,7 @@ class Game:
         if self.MAX_RAISES > 0:
             is_raise_allowed: bool = True
         else:
-            is_raise_allowed: bool = False
+            is_raise_allowed = False
         # Tracks the highest cumulative bet of the players in one betting round to calculate required bets
         highest_cumulative_bet: int = 0
         # Tracks the player whose turn ends the betting round, initialized to the first player (as we're starting from the end)
