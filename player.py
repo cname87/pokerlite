@@ -5,6 +5,7 @@ This module holds the definition of the player class for the pokerlite program.
 Author: Seán Young
 """
 import logging
+import logging.config
 import random
 
 from components import Card
@@ -49,7 +50,9 @@ class Player(ABC):
         self._card: Card = Card(0)
         self._bet_running_total: int = 0
         self._game_stats: list[GameRecord] = []
-        self.logger = logging.getLogger(self.name)
+        #Set up application logging configuration and local logger
+        logging.config.fileConfig('logging.conf')
+        self.logger = logging.getLogger('player')
 
     @property
     @abstractmethod

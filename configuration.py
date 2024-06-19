@@ -30,9 +30,9 @@ CARD_HIGH_NUMBER = 9
 ANTE_BET: int = 10
 # Three allowed values for the opening bet
 OPEN_BET_OPTIONS: Bet_Options = {
-    "Min": ANTE_BET * 2,
-    "Med": ANTE_BET * 2,
-    "Max": ANTE_BET * 2,
+    "Min": ANTE_BET * 10,
+    "Med": ANTE_BET * 10,
+    "Max": ANTE_BET * 10,
 }
 # Three allowed amounts by which a bet can be raised
 RAISE_BET_OPTIONS: Bet_Options = {
@@ -43,7 +43,7 @@ RAISE_BET_OPTIONS: Bet_Options = {
 # Number of raises allowed
 MAX_RAISES: int = 0
 # True to carry the pot when a game is checked, false to give the pot back to the players
-IS_CARRY_POT = False
+IS_CARRY_POT = True
 
 #############################################
 

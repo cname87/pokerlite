@@ -58,6 +58,17 @@ def run_simulation() -> None:
         # [2,3,4,5,6,7,8,9],
         # [1,2,3,4,5,6,7,8,9]
     ]
+    player1_dealer_open_max_strategy_list = [
+        # [9],
+        # [8,9],
+        [7,8,9],
+    ]
+    player1_dealer_open_med_strategy_list = [
+        # [9],
+        # [8,9],
+        [7,8,9],
+    ]
+    
     # Possible strategies for player 1 when they have checked instead of opening and player 2 has opened.
     player1_dealer_see_after_check_and_other_bets_strategy_list = [
         # [9],
@@ -229,55 +240,67 @@ def run_simulation() -> None:
                             pot += (2 * ante)
                             if dealer_card in dealer_open_strategy:
                                 # Dealer opens
+                                logger.debug(f"Dealer opens with card: {dealer_card}")
                                 dealer_cash -= bet
                                 pot += bet
                                 if non_dealer_card in non_dealer_see_after_other_opens_strategy:
                                     # Non-Dealer sees
+                                    logger.debug(f"Non-Dealer sees after Dealer opens with card: {non_dealer_card}")
                                     non_dealer_cash -= bet
                                     pot += bet
                                     if dealer_card > non_dealer_card:
                                         # Dealer wins
+                                        logger.debug(f"Dealer wins with card: {dealer_card}")
                                         num_dealer_wins += 1
                                         dealer_cash += pot
                                         pot = 0
                                     else:
                                         # Non-Dealer wins
+                                        logger.debug(f"Non-Dealer wins with card: {non_dealer_card}")
                                         num_non_dealer_wins += 1
                                         non_dealer_cash += pot
                                         pot = 0
                                 else:
                                     # Non-Dealer folds => Dealer wins
+                                    logger.debug(f"Non-Dealer folds after Dealer opens with card: {non_dealer_card}")
                                     num_dealer_wins += 1
                                     dealer_cash += pot
                                     pot = 0
                             else:
                                 # Dealer checks and Non-Dealer decides to open or not
+                                logger.debug(f"Dealer checks with card: {dealer_card}")
                                 if non_dealer_card in non_dealer_open_after_other_checks_strategy:
                                     # Non-Dealer opens
+                                    logger.debug(f"Non-Dealer opens after Dealer checks with card: {non_dealer_card}")
                                     non_dealer_cash -= bet
                                     pot += bet
                                     # Dealer decides to see the bet or not
                                     if dealer_card in dealer_see_after_check_then_other_bets_strategy:
                                         # Dealer sees
+                                        logger.debug(f"Dealer sees after Non-Dealer opens with card: {dealer_card}")
                                         dealer_cash -= bet
                                         pot += bet
                                         if dealer_card > non_dealer_card:
                                             # Dealer wins
+                                            logger.debug(f"Dealer wins with card: {dealer_card}")
                                             num_dealer_wins += 1
                                             dealer_cash += pot
                                             pot = 0
                                         else:
                                             # Non-Dealer wins
+                                            logger.debug(f"Non-Dealer wins with card: {non_dealer_card}")
                                             num_non_dealer_wins += 1
                                             non_dealer_cash += pot
                                             pot = 0
                                     else:
                                         # Dealer folds => Non-Dealer wins
+                                        logger.debug(f"Dealer folds after Non-Dealer opens with card: {dealer_card}")
                                         num_non_dealer_wins += 1
                                         non_dealer_cash += pot
                                         pot = 0
                                 else:
                                     # Non-Dealer also checks => no winner
+                                    logger.debug(f"Non-Dealer also checks after Dealer checks with card: {non_dealer_card}")
                                     # Reset the pot and ante for the next round
                                     dealer_cash += ante
                                     non_dealer_cash += ante
@@ -451,62 +474,73 @@ def run_simulation() -> None:
                             Inner betting round loop.
                             Runs every possible card combination between dealer and non-dealer, all equally likely, and sums winnings over all
                             """
-                            
                             num_deals += 1
                             dealer_cash -= ante
                             non_dealer_cash -= ante
                             pot += (2 * ante)
                             if dealer_card in dealer_open_strategy:
                                 # Dealer opens
+                                logger.debug(f"Dealer opens with card: {dealer_card}")
                                 dealer_cash -= bet
                                 pot += bet
                                 if non_dealer_card in non_dealer_see_after_other_opens_strategy:
                                     # Non-Dealer sees
+                                    logger.debug(f"Non-Dealer sees after Dealer opens with card: {non_dealer_card}")
                                     non_dealer_cash -= bet
                                     pot += bet
                                     if dealer_card > non_dealer_card:
                                         # Dealer wins
+                                        logger.debug(f"Dealer wins with card: {dealer_card}")
                                         num_dealer_wins += 1
                                         dealer_cash += pot
                                         pot = 0
                                     else:
                                         # Non-Dealer wins
+                                        logger.debug(f"Non-Dealer wins with card: {non_dealer_card}")
                                         num_non_dealer_wins += 1
                                         non_dealer_cash += pot
                                         pot = 0
                                 else:
                                     # Non-Dealer folds => Dealer wins
+                                    logger.debug(f"Non-Dealer folds after Dealer opens with card: {non_dealer_card}")
                                     num_dealer_wins += 1
                                     dealer_cash += pot
                                     pot = 0
                             else:
                                 # Dealer checks and Non-Dealer decides to open or not
+                                logger.debug(f"Dealer checks with card: {dealer_card}")
                                 if non_dealer_card in non_dealer_open_after_other_checks_strategy:
                                     # Non-Dealer opens
+                                    logger.debug(f"Non-Dealer opens after Dealer checks with card: {non_dealer_card}")
                                     non_dealer_cash -= bet
                                     pot += bet
                                     # Dealer decides to see the bet or not
                                     if dealer_card in dealer_see_after_check_then_other_bets_strategy:
                                         # Dealer sees
+                                        logger.debug(f"Dealer sees after Non-Dealer opens with card: {dealer_card}")
                                         dealer_cash -= bet
                                         pot += bet
                                         if dealer_card > non_dealer_card:
                                             # Dealer wins
+                                            logger.debug(f"Dealer wins with card: {dealer_card}")
                                             num_dealer_wins += 1
                                             dealer_cash += pot
                                             pot = 0
                                         else:
                                             # Non-Dealer wins
+                                            logger.debug(f"Non-Dealer wins with card: {non_dealer_card}")
                                             num_non_dealer_wins += 1
                                             non_dealer_cash += pot
                                             pot = 0
                                     else:
                                         # Dealer folds => Non-Dealer wins
+                                        logger.debug(f"Dealer folds after Non-Dealer opens with card: {dealer_card}")
                                         num_non_dealer_wins += 1
                                         non_dealer_cash += pot
                                         pot = 0
                                 else:
                                     # Non-Dealer also checks => no winner
+                                    logger.debug(f"Non-Dealer also checks after Dealer checks with card: {non_dealer_card}")
                                     # Reset the pot and ante for the next round
                                     dealer_cash += ante
                                     non_dealer_cash += ante
@@ -530,7 +564,7 @@ def run_simulation() -> None:
 
                     player2_dealer_player1_win_ratio = num_non_dealer_wins / num_deals
                     player2_dealer_carry_ratio = num_pot_carries / num_deals
-                    # Note: For overall totals th pot is divided at the overall level
+                    # Note: For overall totals the pot is divided at the overall level
                     tot_player1_wins += num_non_dealer_wins
                     tot_player2_wins += num_dealer_wins
                     tot_player1_gain += non_dealer_cash
@@ -630,9 +664,11 @@ def run_simulation() -> None:
     tot_player1_gain -= int(tot_pot_carries * ante)
     tot_player2_gain -= int(tot_pot_carries * ante)
     
+    """
+    # * To be deleted
     # A factor allows for the uneven division of the pot
-    player1_gross_carry = 1 / (1 - player2_dealer_carry_ratio)
-    player2_gross_carry = 1 / (1 - player1_dealer_carry_ratio)
+    player1_gross_carry = 0.5 # 1 / (1 - player2_dealer_carry_ratio)
+    player2_gross_carry = 0.5 # 1 / (1 - player1_dealer_carry_ratio)
     player1_win = (player1_gross_carry * player1_dealer_player1_win_ratio) + (player2_gross_carry * player2_dealer_player1_win_ratio)
     player2_win = (player1_gross_carry * player1_dealer_player2_win_ratio) + (player2_gross_carry * player2_dealer_player2_win_ratio)
     player1_carry_win_ratio = player1_win / (player1_win + player2_win)
@@ -640,9 +676,9 @@ def run_simulation() -> None:
     
     tot_player1_gain += int(tot_pot_carried * player1_carry_win_ratio)
     tot_player2_gain += int(tot_pot_carried * player2_carry_win_ratio)
-    
-    # tot_player1_gain += int(tot_pot_carried * tot_player1_wins / (tot_player1_wins + tot_player2_wins))
-    # tot_player2_gain += int(tot_pot_carried * tot_player2_wins / (tot_player1_wins + tot_player2_wins))
+    """
+    tot_player1_gain += int(tot_pot_carried * tot_player1_wins / (tot_player1_wins + tot_player2_wins))
+    tot_player2_gain += int(tot_pot_carried * tot_player2_wins / (tot_player1_wins + tot_player2_wins))
     
 
     print("\n")
@@ -659,8 +695,11 @@ def run_simulation() -> None:
     print(f"Total player2 wins: {tot_player2_wins}")
     print(f"Total pot carries: {tot_pot_carries}")
     print(f"Total pot returns: {tot_pot_returns}")
-    print(f"Total player1 gain per game: {round(tot_player1_gain / (tot_player1_wins + tot_player2_wins + tot_pot_carries + tot_pot_returns),2)}")
-    print(f"Total player2 gain per game: {round(tot_player2_gain / (tot_player1_wins + tot_player2_wins + tot_pot_carries + tot_pot_returns),2)}")
+    print(f"Total player1 gain: {tot_player1_gain}")
+    print(f"Total player2 gain: {tot_player2_gain}")
+    print(f"{tot_player1_wins + tot_player2_wins + tot_pot_carries + tot_pot_returns}")
+    print(f"Total player1 gain per game: {round(tot_player1_gain / (tot_player1_wins + tot_player2_wins + tot_pot_carries + tot_pot_returns),4)}")
+    print(f"Total player2 gain per game: {round(tot_player2_gain / (tot_player1_wins + tot_player2_wins + tot_pot_carries + tot_pot_returns),4)}")
 
 # Run the simulation
 if __name__ == "__main__":

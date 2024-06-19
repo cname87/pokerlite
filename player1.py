@@ -16,7 +16,7 @@ class PlayerCode(Player):
     
     @property
     def name(self) -> str:
-        return "player_1"
+        return "player1"
 
     def __init__(
         self, 
@@ -60,23 +60,24 @@ class PlayerCode(Player):
                 case("Dealer Opens"):
                     dealer_open_bets = self.strategy["Dealer_Opens_Bets"]
                     if self.card.value in self.get_strategy_list(dealer_open_bets["Dealer_Opens_Max"]):
-                        self.logger.debug(f"The playing cards are: {self.get_strategy_list(dealer_open_bets["Dealer_Opens_Max"])}")
+                        self.logger.debug(f"The playing strategy is: {self.get_strategy_list(dealer_open_bets["Dealer_Opens_Max"])}")
                         bet = Player.get_CONFIG()["OPEN_BET_OPTIONS"]["Max"]
                         self.logger.debug(f"{self.name} bets: {bet}")
                     elif self.card.value in self.get_strategy_list(dealer_open_bets["Dealer_Opens_Med"]):
-                        self.logger.debug(f"The playing cards are: {self.get_strategy_list(dealer_open_bets["Dealer_Opens_Med"])}")
+                        self.logger.debug(f"The playing strategy is: {self.get_strategy_list(dealer_open_bets["Dealer_Opens_Med"])}")
                         bet = Player.get_CONFIG()["OPEN_BET_OPTIONS"]["Med"]
                         self.logger.debug(f"{self.name} bets: {bet}")
                     elif self.card.value in self.get_strategy_list(dealer_open_bets["Dealer_Opens_Min"]):
-                        self.logger.debug(f"The playing cards are: {self.get_strategy_list(dealer_open_bets["Dealer_Opens_Min"])}")
+                        self.logger.debug(f"The playing strategy is: {self.get_strategy_list(dealer_open_bets["Dealer_Opens_Min"])}")
                         bet = Player.get_CONFIG()["OPEN_BET_OPTIONS"]["Min"]
                         self.logger.debug(f"{self.name} bets: {bet}")
                     else:
+                        self.logger.debug(f"The playing strategy is: {self.get_strategy_list(dealer_open_bets["Dealer_Opens_Min"])}")
                         bet = 0 # Check
                         self.logger.debug(f"{self.name} checks instead of opening")
                 case("Dealer Sees after Non-Dealer Opens after Dealer Checks"):
                     player_bet_cards = self.get_strategy_list(self.strategy["Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks"])
-                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
+                    self.logger.debug(f"The playing strategy is: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
                         bet = required_bet # See
                         self.logger.debug(f"{self.name} sees with bet: {bet}")
@@ -85,7 +86,7 @@ class PlayerCode(Player):
                         self.logger.debug(f"{self.name} folds")
                 case("Non-Dealer Sees after Dealer Opens"):
                     player_bet_cards = self.get_strategy_list(self.strategy["Non_Dealer_Sees_after_Dealer_Opens"])
-                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
+                    self.logger.debug(f"The playing strategy is: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
                         bet = required_bet # See
                         self.logger.debug(f"{self.name} sees with bet: {bet}")
@@ -94,7 +95,7 @@ class PlayerCode(Player):
                         self.logger.debug(f"{self.name} folds")
                 case("Non-Dealer Opens after Dealer Checks"):
                     player_bet_cards = self.get_strategy_list(self.strategy["Non_Dealer_Opens_after_Dealer_Checks"])
-                    self.logger.debug(f"The playing cards are: {player_bet_cards}")
+                    self.logger.debug(f"The playing strategy is: {player_bet_cards}")
                     if self.card.value in player_bet_cards:
                         bet = Player.get_CONFIG()["OPEN_BET_OPTIONS"]["Min"] # Bet
                         self.logger.debug(f"{self.name} bets: {bet}")

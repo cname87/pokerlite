@@ -19,7 +19,7 @@ from importlib import import_module
 from configuration import GameConfig, GAME_CONFIG, game_records, RoundRecord, GameRecord, TypeForBetType, TypeForPlayState
 from components import Deck
 from player import Player
-from utilities import print_records
+from utilities import download_game_records, print_records
 
 # Custom type
 TypeForRoundReturn = TypedDict("TypeForRoundReturn", {"Pot": int, "Game Checked": bool, "Remaining Players": list[Player]})
@@ -278,6 +278,7 @@ class Game:
         Plays one betting round of the game.
         Args:
             round_number (int): The number of this round.
+            pot (int): The value of the pot passed in.
         """
         self.logger.debug(f"Round number: {round_number}")
         
@@ -318,7 +319,7 @@ class Game:
             self.logger.debug(f"{player_order[i].name} balance is: {player_order[i].cash_balance} coins")
             self.logger.debug(f"The pot is: {pot} coins")
             
-            # Record the ane bets
+            # Record the ante bets
             round_data.append({
                 "Round_Number": round_number,
                 "Pot": pot,
@@ -343,11 +344,13 @@ class Game:
         )
         
         # Add the card data to the game data after the round is complete (as the game data is shared with the players)
+        # Get the pot value before the ante bets were added.
+        start_pot = pot - (2 * self.ANTE_BET)
         for i in range(0, len(self.players)): # self.players as player_order may be reduced due to players folding
             self.game_records.append({
                 "Game_Id": self.game_id,
                 "Round_Number": round_number,
-                "Pot": pot,
+                "Pot": start_pot,
                 "Description": "Card",
                 "Player": self.players[i].name,
                 "Value": self.players[i].card.value
@@ -447,3 +450,5 @@ if __name__ == "__main__":
     game.play()
     if game.logger.getEffectiveLevel() == logging.DEBUG: 
         print_records(game.game_records)
+    # Download game record file to a file in the same directory
+    download_game_records(game.game_records, 'game_records.csv')

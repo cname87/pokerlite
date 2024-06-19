@@ -12,7 +12,9 @@ logger = logging.getLogger('utility')
 
 from typing import Any
 from collections import defaultdict
-from configuration import GameConfig, CARD_HIGH_NUMBER, ANTE_BET, OPEN_BET_OPTIONS
+import csv
+
+from configuration import GameConfig, CARD_HIGH_NUMBER, ANTE_BET, OPEN_BET_OPTIONS, GameRecord
 
 # Utility function to validate bets
 def validate_bet(
@@ -65,3 +67,18 @@ def print_records(record_list: list[Any]) -> None:
     for record in record_list:
         row = " | ".join(str(record[key]).ljust(max_lengths[key], " ") for key in max_lengths)
         print(row)
+
+def download_game_records(game_records: list[GameRecord], file_path: str) -> None:
+    """
+    Downloads the game records to a CSV file.
+    Args:
+        game_records (list[GameRecord]): The list of game records.
+        file_path (str): The file path to save the CSV file.
+    """
+    fieldnames = game_records[0].keys()
+
+    with open(file_path, 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(game_records)
+
