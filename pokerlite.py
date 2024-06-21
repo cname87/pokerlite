@@ -451,4 +451,4 @@ if __name__ == "__main__":
     if game.logger.getEffectiveLevel() == logging.DEBUG: 
         print_records(game.game_records)
     # Download game record file to a file in the same directory
-    download_game_records(game.game_records, 'game_records.csv')
+    # download_game_records(game.game_records, 'game_records.csv')
