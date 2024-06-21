@@ -132,13 +132,14 @@ def betting_round_loop(
     # Betting round loop test
     assert num_deals == num_dealer_wins + num_non_dealer_wins + num_pot_carries + num_pot_returns, "Deal count error"
 
-
     # Divide carried pot between players for calculaton of one strategy comparison
     one_strategy_pot_carried = num_pot_carries * (2 * ante)
-    one_strategy_dealer_cash = dealer_cash + int(num_pot_carries * ante)
-    one_strategy_non_dealer_cash = non_dealer_cash + int(num_pot_carries * ante)
-    one_strategy_dealer_cash += int(one_strategy_pot_carried * (num_dealer_wins / (num_dealer_wins + num_non_dealer_wins)))
-    one_strategy_non_dealer_cash += int(one_strategy_pot_carried * (num_non_dealer_wins / (num_dealer_wins + num_non_dealer_wins)))
+    one_strategy_dealer_cash = dealer_cash
+    one_strategy_non_dealer_cash = non_dealer_cash
+    one_strategy_dealer_cash -= int(num_pot_carries * ante)
+    one_strategy_non_dealer_cash -= int(num_pot_carries * ante)
+    one_strategy_dealer_cash += int(one_strategy_pot_carried * num_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
+    one_strategy_non_dealer_cash += int(one_strategy_pot_carried * num_non_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
 
     print("\n")
     print(f"Betting round loop summary: Player1 / dealer open strategy: {open_strategy}")
@@ -156,26 +157,26 @@ def betting_round_loop(
     dealer_strategy_and_one_non_dealer_strategy_list.append({
         "Dealer Strategy": [open_strategy, second_see_strategy],
         "Non-Dealer Strategy": [see_strategy, second_open_strategy],
-        "Dealer Gain": round(dealer_cash / num_deals, 2),
-        "Non-Dealer Gain":  round(non_dealer_cash / num_deals, 2),
+        "Dealer Gain": round(one_strategy_dealer_cash / num_deals, 2),
+        "Non-Dealer Gain":  round(one_strategy_non_dealer_cash / num_deals, 2),
     })
 
     # Store the dealer strategy that maximizes dealer gain
-    if dealer_cash / num_deals > dealer_max_gain:
-        dealer_max_gain = round(dealer_cash / num_deals, 2)
+    if one_strategy_dealer_cash / num_deals > dealer_max_gain:
+        dealer_max_gain = round(one_strategy_dealer_cash / num_deals, 2)
         dealer_open_strategy_max = open_strategy
         dealer_see_after_check_then_other_bets_strategy_max = second_see_strategy
-    if dealer_cash >= 0:
+    if one_strategy_dealer_cash >= 0:
         # Track the number of games that the dealer won
         dealer_positive_gain_count += 1
-        dealer_positive_gain_total += dealer_cash
-    elif dealer_cash == 0:
+        dealer_positive_gain_total += one_strategy_dealer_cash
+    elif one_strategy_dealer_cash == 0:
         # Track the number of games that no one won
         dealer_zero_gain_count += 1
     else:
         # Track the number of games that the dealer lost
         dealer_negative_gain_count += 1
-        dealer_negative_gain_total += dealer_cash
+        dealer_negative_gain_total += one_strategy_dealer_cash
 
     return  {
         "num_deals": num_deals,
@@ -432,21 +433,21 @@ def run_simulation() -> None:
 
                     # Add to overall totals
                     # Note: For overall totals the pot is divided at the overall level
-                    num_deals += betting_round_loop_results["num_deals"]
-                    tot_player1_wins += betting_round_loop_results["num_dealer_wins"]
-                    tot_player2_wins += betting_round_loop_results["num_non_dealer_wins"]
-                    tot_player1_gain += betting_round_loop_results["dealer_cash"]
-                    tot_player2_gain += betting_round_loop_results["non_dealer_cash"]
-                    tot_pot_carries += betting_round_loop_results["num_pot_carries"]
-                    tot_pot_returns += betting_round_loop_results["num_pot_returns"]
-                    dealer_max_gain = betting_round_loop_results["dealer_max_gain"]
-                    dealer_positive_gain_count = betting_round_loop_results["dealer_positive_gain_count"]
-                    dealer_negative_gain_count = betting_round_loop_results["dealer_negative_gain_count"]
-                    dealer_zero_gain_count = betting_round_loop_results["dealer_zero_gain_count"]
-                    dealer_positive_gain_total = betting_round_loop_results["dealer_positive_gain_total"]
-                    dealer_negative_gain_total = betting_round_loop_results["dealer_negative_gain_total"]
-                    dealer_open_strategy_max = betting_round_loop_results["dealer_open_strategy_max"]
-                    dealer_see_after_check_then_other_bets_strategy_max = betting_round_loop_results["dealer_see_after_check_then_other_bets_strategy_max"] 
+                    num_deals += betting_round_loop_results["num_deals"] # type: ignore
+                    tot_player1_wins += betting_round_loop_results["num_dealer_wins"] # type: ignore
+                    tot_player2_wins += betting_round_loop_results["num_non_dealer_wins"] # type: ignore
+                    tot_player1_gain += betting_round_loop_results["dealer_cash"] # type: ignore
+                    tot_player2_gain += betting_round_loop_results["non_dealer_cash"] # type: ignore
+                    tot_pot_carries += betting_round_loop_results["num_pot_carries"] # type: ignore
+                    tot_pot_returns += betting_round_loop_results["num_pot_returns"] # type: ignore
+                    dealer_max_gain = betting_round_loop_results["dealer_max_gain"] # type: ignore
+                    dealer_positive_gain_count = betting_round_loop_results["dealer_positive_gain_count"] # type: ignore
+                    dealer_negative_gain_count = betting_round_loop_results["dealer_negative_gain_count"] # type: ignore
+                    dealer_zero_gain_count = betting_round_loop_results["dealer_zero_gain_count"] # type: ignore
+                    dealer_positive_gain_total = betting_round_loop_results["dealer_positive_gain_total"] # type: ignore
+                    dealer_negative_gain_total = betting_round_loop_results["dealer_negative_gain_total"] # type: ignore
+                    dealer_open_strategy_max = betting_round_loop_results["dealer_open_strategy_max"] # type: ignore
+                    dealer_see_after_check_then_other_bets_strategy_max = betting_round_loop_results["dealer_see_after_check_then_other_bets_strategy_max"]  # type: ignore
 
             # Print the results of one non-dealer strategy Vs all dealer strategies
             print(f"\nThe list of dealer strategies tested on the mid loop against one non-dealer strategy")
@@ -485,6 +486,7 @@ def run_simulation() -> None:
     This allows the best non-dealer strategy to be found for each dealer strategy. 
     """
     # Track the non-dealer strategies that provide maximum gain
+    
     non_dealer_see_after_other_opens_cards_max: list[int] = []
     non_dealer_open_after_other_checks_cards_max: list[int] = []
 
@@ -540,21 +542,21 @@ def run_simulation() -> None:
                     
                     # Add to overall totals
                     # Note: For overall totals the pot is divided at the overall level
-                    num_deals += betting_round_loop_results["num_deals"]
-                    tot_player2_wins += betting_round_loop_results["num_dealer_wins"]
-                    tot_player1_wins += betting_round_loop_results["num_non_dealer_wins"]
-                    tot_player2_gain += betting_round_loop_results["dealer_cash"]
-                    tot_player1_gain += betting_round_loop_results["non_dealer_cash"]
-                    tot_pot_carries += betting_round_loop_results["num_pot_carries"]
-                    tot_pot_returns += betting_round_loop_results["num_pot_returns"]
-                    non_dealer_max_gain = betting_round_loop_results["dealer_max_gain"]
-                    non_dealer_positive_gain_count = betting_round_loop_results["dealer_positive_gain_count"]
-                    non_dealer_negative_gain_count = betting_round_loop_results["dealer_negative_gain_count"]
-                    non_dealer_zero_gain_count = betting_round_loop_results["dealer_zero_gain_count"]
-                    non_dealer_positive_gain_total = betting_round_loop_results["dealer_positive_gain_total"]
-                    non_dealer_negative_gain_total = betting_round_loop_results["dealer_negative_gain_total"]
-                    non_dealer_see_after_other_opens_cards_max = betting_round_loop_results["dealer_open_strategy_max"]
-                    non_dealer_open_after_other_checks_cards_max = betting_round_loop_results["dealer_see_after_check_then_other_bets_strategy_max"] 
+                    num_deals += betting_round_loop_results["num_deals"] # type: ignore
+                    tot_player2_wins += betting_round_loop_results["num_dealer_wins"] # type: ignore
+                    tot_player1_wins += betting_round_loop_results["num_non_dealer_wins"] # type: ignore
+                    tot_player2_gain += betting_round_loop_results["dealer_cash"] # type: ignore
+                    tot_player1_gain += betting_round_loop_results["non_dealer_cash"] # type: ignore
+                    tot_pot_carries += betting_round_loop_results["num_pot_carries"] # type: ignore
+                    tot_pot_returns += betting_round_loop_results["num_pot_returns"] # type: ignore
+                    non_dealer_max_gain = betting_round_loop_results["dealer_max_gain"] # type: ignore
+                    non_dealer_positive_gain_count = betting_round_loop_results["dealer_positive_gain_count"] # type: ignore
+                    non_dealer_negative_gain_count = betting_round_loop_results["dealer_negative_gain_count"] # type: ignore
+                    non_dealer_zero_gain_count = betting_round_loop_results["dealer_zero_gain_count"] # type: ignore
+                    non_dealer_positive_gain_total = betting_round_loop_results["dealer_positive_gain_total"] # type: ignore
+                    non_dealer_negative_gain_total = betting_round_loop_results["dealer_negative_gain_total"] # type: ignore
+                    non_dealer_see_after_other_opens_cards_max = betting_round_loop_results["dealer_open_strategy_max"] # type: ignore
+                    non_dealer_open_after_other_checks_cards_max = betting_round_loop_results["dealer_see_after_check_then_other_bets_strategy_max"]  # type: ignore
 
             # Print the results of one dealer strategy Vs all non-dealer strategies
             print(f"\nThe list of non-dealer strategies tested on the mid loop against one dealer strategy")
