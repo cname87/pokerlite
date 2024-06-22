@@ -34,9 +34,9 @@ def betting_round_loop(
 ) -> dict[str, int | float | list[int]]:
 
     # Reset betting round parameters
-    dealer_cash = 0
-    non_dealer_cash = 0
-    num_deals = 0
+    dealer_cash: float = 0
+    non_dealer_cash: float = 0
+    num_deals:int = 0
     num_dealer_wins: int = 0
     num_non_dealer_wins: int = 0
     num_pot_carries: int = 0
@@ -136,10 +136,10 @@ def betting_round_loop(
     one_strategy_pot_carried = num_pot_carries * (2 * ante)
     one_strategy_dealer_cash = dealer_cash
     one_strategy_non_dealer_cash = non_dealer_cash
-    one_strategy_dealer_cash -= int(num_pot_carries * ante)
-    one_strategy_non_dealer_cash -= int(num_pot_carries * ante)
-    one_strategy_dealer_cash += int(one_strategy_pot_carried * num_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
-    one_strategy_non_dealer_cash += int(one_strategy_pot_carried * num_non_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
+    one_strategy_dealer_cash -= num_pot_carries * ante
+    one_strategy_non_dealer_cash -= num_pot_carries * ante
+    one_strategy_dealer_cash += round(one_strategy_pot_carried * num_dealer_wins / (num_dealer_wins + num_non_dealer_wins),2)
+    one_strategy_non_dealer_cash += round(one_strategy_pot_carried * num_non_dealer_wins / (num_dealer_wins + num_non_dealer_wins),2)
 
     print("\n")
     print(f"Betting round loop summary: Player1 / dealer open strategy: {open_strategy}")
@@ -365,8 +365,8 @@ def run_simulation() -> None:
     num_deals: int = 0
     tot_player1_wins: int = 0
     tot_player2_wins: int = 0
-    tot_player1_gain: int = 0
-    tot_player2_gain: int = 0
+    tot_player1_gain: float = 0
+    tot_player2_gain: float = 0
     tot_pot_carries: int = 0
     tot_pot_returns: int = 0
 
@@ -597,10 +597,10 @@ def run_simulation() -> None:
 
     # Divide the carried pot across all games between players
     tot_pot_carried = tot_pot_carries * (2 * ante)
-    tot_player1_gain -= int(tot_pot_carries * ante)
-    tot_player2_gain -= int(tot_pot_carries * ante)
-    tot_player1_gain += int(tot_pot_carried * tot_player1_wins / (tot_player1_wins + tot_player2_wins))
-    tot_player2_gain += int(tot_pot_carried * tot_player2_wins / (tot_player1_wins + tot_player2_wins))
+    tot_player1_gain -= tot_pot_carries * ante
+    tot_player2_gain -= tot_pot_carries * ante
+    tot_player1_gain += tot_pot_carried * tot_player1_wins / (tot_player1_wins + tot_player2_wins)
+    tot_player2_gain += tot_pot_carried * tot_player2_wins / (tot_player1_wins + tot_player2_wins)
     
 
     print("\n")
