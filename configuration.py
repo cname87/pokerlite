@@ -123,3 +123,8 @@ game_records: list[GameRecord] = [{
     "Player": "",
     "Value": 0
 }]
+
+# Miscellaneous constants
+BOLD = "\033[1m"
+UNDERLINE = "\033[4m"
+RESET = "\033[0m"

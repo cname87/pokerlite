@@ -59,7 +59,7 @@ def print_records(record_list: list[Any]) -> None:
             max_lengths[key] = max(max_lengths[key], len(str(record[key])), len(key))
 
     # Create a header
-    header = " | ".join(key.capitalize().ljust(max_lengths[key]) for key in max_lengths)
+    header = " | ".join(key.title().ljust(max_lengths[key]) for key in max_lengths)
     print(header)
     print("-" * len(header))
 
