@@ -4,6 +4,7 @@
 Runs a simulation of the pokerlite game.
 Author: Seán Young
 """
+from collections import namedtuple
 
 import logging
 import logging.config
@@ -13,16 +14,37 @@ logger = logging.getLogger('simulator')
 from configuration import CARD_HIGH_NUMBER, ANTE_BET, OPEN_BET_OPTIONS, IS_CARRY_POT, BOLD, UNDERLINE, RESET
 from utilities import print_records
 
+
+class BestStrategyDetail:
+    def __init__(self):
+        self.max_gain_per_deal = -100_000
+        self.positive_gain_count = 0
+        self.negative_gain_count = 0
+        self.zero_gain_count = 0
+        self.positive_gain_per_deal_total = 0
+        self.negative_gain_per_deal_total = 0
+        self.open_strategy_max = []
+        self.see_strategy_max = []
+
+    def update(self, cash, num_deals, open_strategy, see_strategy):
+        # Update the maximum win per deal and the associated strategies
+        if cash / num_deals > self.max_gain_per_deal:
+            self.max_gain_per_deal = cash / num_deals
+            self.open_strategy_max = open_strategy
+            self.see_strategy_max = see_strategy
+        # Count wins, checks and losses, and associated win totals
+        if cash > 0:
+            self.positive_gain_count += 1
+            self.positive_gain_per_deal_total += cash / num_deals
+        elif cash == 0:
+            self.zero_gain_count += 1
+        elif cash < 0:
+            self.negative_gain_count += 1
+            self.negative_gain_per_deal_total += cash / num_deals
+
 # Runs the betting round loop for every possible card combination between dealer and non-dealer, all equally likely, and sums winnings over all
 def betting_round_loop(
-    dealer_open_strategy_max: list[int],
-    dealer_see_after_check_then_other_bets_strategy_max: list[int],
-    dealer_max_gain_per_deal: float,
-    dealer_positive_gain_count: int,
-    dealer_negative_gain_count: int,
-    dealer_zero_gain_count: int,
-    dealer_positive_gain_per_deal_total: float,
-    dealer_negative_gain_per_deal_total: float,
+    best_strategy: BestStrategyDetail,
     dealer_and_non_dealer_strategies_list: list[dict[str, float | list[list[int]]]],
     ante: int,
     bet: int,
@@ -41,6 +63,7 @@ def betting_round_loop(
     num_non_dealer_wins: int = 0
     num_pot_carries: int = 0
     num_pot_returns: int = 0
+    best_strategy = BestStrategyDetail()
     
     # Loop through every possible card combination between dealer and non-dealer, all equally likely, and sum winnings over all
     for dealer_card in range(1, CARD_HIGH_NUMBER + 1):
@@ -162,22 +185,11 @@ def betting_round_loop(
         "Non-Dealer Gain":  round(one_strategy_non_dealer_cash / num_deals, 4),
     })
 
-    # Store the dealer strategy that maximizes dealer gain
-    if one_strategy_dealer_cash / num_deals > dealer_max_gain_per_deal:
-        dealer_max_gain_per_deal = one_strategy_dealer_cash / num_deals
-        dealer_open_strategy_max = dealer_open_strategy
-        dealer_see_after_check_then_other_bets_strategy_max = dealer_see_strategy
-    if one_strategy_dealer_cash > 0:
-        # Track the number of games that the dealer won
-        dealer_positive_gain_count += 1
-        dealer_positive_gain_per_deal_total += one_strategy_dealer_cash / num_deals
-    elif one_strategy_dealer_cash == 0:
-        # Track the number of games that no one won
-        dealer_zero_gain_count += 1
-    elif one_strategy_dealer_cash < 0:
-        # Track the number of games that the dealer lost
-        dealer_negative_gain_count += 1
-        dealer_negative_gain_per_deal_total += one_strategy_dealer_cash / num_deals
+
+
+    best_strategy.update(one_strategy_dealer_cash, num_deals, dealer_open_strategy, dealer_see_strategy)
+      
+
 
     return  {
         "num_deals": num_deals,
@@ -187,14 +199,14 @@ def betting_round_loop(
         "non_dealer_cash": non_dealer_cash,
         "num_pot_carries": num_pot_carries,
         "num_pot_returns": num_pot_returns,
-        "dealer_max_gain_per_deal": dealer_max_gain_per_deal,
-        "dealer_positive_gain_count": dealer_positive_gain_count,
-        "dealer_negative_gain_count": dealer_negative_gain_count,
-        "dealer_zero_gain_count": dealer_zero_gain_count,
-        "dealer_positive_gain_per_deal_total": dealer_positive_gain_per_deal_total,
-        "dealer_negative_gain_per_deal_total": dealer_negative_gain_per_deal_total,
-        "dealer_open_strategy_max": dealer_open_strategy_max,
-        "dealer_see_after_check_then_other_bets_strategy_max": dealer_see_after_check_then_other_bets_strategy_max,
+        "dealer_max_gain_per_deal": best_strategy.max_gain_per_deal,
+        "dealer_positive_gain_count": best_strategy.positive_gain_count,
+        "dealer_negative_gain_count": best_strategy.negative_gain_count,
+        "dealer_zero_gain_count": best_strategy.zero_gain_count,
+        "dealer_positive_gain_per_deal_total": best_strategy.positive_gain_per_deal_total,
+        "dealer_negative_gain_per_deal_total": best_strategy.negative_gain_per_deal_total,
+        "dealer_open_strategy_max": best_strategy.open_strategy_max,
+        "dealer_see_after_check_then_other_bets_strategy_max": best_strategy.see_strategy_max,
         "dealer_and_non_dealer_strategies_list": dealer_and_non_dealer_strategies_list,
     }
 
@@ -234,7 +246,7 @@ def run_simulation() -> None:
     # Possible strategies for player 1 when player 1 opens first
     player1_dealer_open_strategy_list = [
         [9],
-        [8,9],
+        # [8,9],
         # [7,8,9],
         # [6,7,8,9],
         # [5,6,7,8,9],
@@ -261,10 +273,10 @@ def run_simulation() -> None:
     
     # Possible strategies for player 1 when they have checked instead of opening and player 2 has opened.
     player1_dealer_see_after_check_then_other_bets_strategy_list = [
-        # [9],
+        [9],
         # [8,9],
-        [7,8,9],
-        [6,7,8,9],
+        # [7,8,9],
+        # [6,7,8,9],
         # [5,6,7,8,9],
         # [4,5,6,7,8,9],
         # [3,4,5,6,7,8,9],
@@ -274,9 +286,9 @@ def run_simulation() -> None:
     # Possible strategies for player 1 when player 2 opens first    
     player1_non_dealer_see_after_other_opens_strategy_list = [
         # [9],
-        # [8,9],
-        [7,8,9],
-        [6,7,8,9],
+        [8,9],
+        # [7,8,9],
+        # [6,7,8,9],
         # [5,6,7,8,9],
         # [4,5,6,7,8,9],
         # [3,4,5,6,7,8,9],
@@ -285,7 +297,7 @@ def run_simulation() -> None:
     ]
     # Possible strategies for player 1 when player 2 opens first but checks instead of opening
     player1_non_dealer_open_after_other_checks_strategy_list = [
-        [9],
+        # [9],
         [8,9],
         # [7,8,9],
         # [6,7,8,9],
@@ -299,10 +311,10 @@ def run_simulation() -> None:
     player2_dealer_open_strategy_list = [
         # [9],
         # [8,9],
-        # [7,8,9],
+        [7,8,9],
         # [6,7,8,9],
-        [5,6,7,8,9],
-        [4,5,6,7,8,9],
+        # [5,6,7,8,9],
+        # [4,5,6,7,8,9],
         # [3,4,5,6,7,8,9],
         # [2,3,4,5,6,7,8,9],
         # [1,2,3,4,5,6,7,8,9]
@@ -327,12 +339,12 @@ def run_simulation() -> None:
     player2_dealer_see_after_check_then_other_bets_strategy_list = [
         # [9],
         # [8,9],
-        # [7,8,9],
+        [7,8,9],
         # [6,7,8,9],
         # [5,6,7,8,9],
         # [4,5,6,7,8,9],
-        [3,4,5,6,7,8,9],
-        [2,3,4,5,6,7,8,9],
+        # [3,4,5,6,7,8,9],
+        # [2,3,4,5,6,7,8,9],
         # [1,2,3,4,5,6,7,8,9]
     ]
     # Possible strategies for player 2 when player 1 opens first
@@ -340,11 +352,11 @@ def run_simulation() -> None:
         # [9],
         # [8,9],
         # [7,8,9],
-        # [6,7,8,9],
+        [6,7,8,9],
         # [5,6,7,8,9],
         # [4,5,6,7,8,9],
-        [3,4,5,6,7,8,9],
-        [2,3,4,5,6,7,8,9],
+        # [3,4,5,6,7,8,9],
+        # [2,3,4,5,6,7,8,9],
         # [1,2,3,4,5,6,7,8,9]
     ]
     # Possible strategies for player 2 when player 1 opens first but checks instead of opening
@@ -352,9 +364,9 @@ def run_simulation() -> None:
         # [9],
         # [8,9],
         # [7,8,9],
-        # [6,7,8,9],
-        [5,6,7,8,9],
-        [4,5,6,7,8,9],
+        [6,7,8,9],
+        # [5,6,7,8,9],
+        # [4,5,6,7,8,9],
         # [3,4,5,6,7,8,9],
         # [2,3,4,5,6,7,8,9],
         # [1,2,3,4,5,6,7,8,9]
@@ -394,13 +406,8 @@ def run_simulation() -> None:
             Runs every strategy combination for the non-dealer (player2), i.e., every see-after-open and open-after-check strategy combination.  
             """
             
-            # Reset the parameters used in the mid deal strategy loop 
-            dealer_max_gain_per_deal: float =-100_000
-            dealer_positive_gain_count: int = 0
-            dealer_negative_gain_count: int = 0
-            dealer_zero_gain_count: int = 0
-            dealer_positive_gain_per_deal_total: float = 0
-            dealer_negative_gain_per_deal_total: float = 0
+            # Reset the parameters used in the mid deal strategy loop
+            best_strategy = BestStrategyDetail() 
             dealer_and_non_dealer_strategies_list: list[dict[str, float | list[list[int]]]] = []
 
             # Loop through every possible dealer strategy and store the one with the most gain            
@@ -414,14 +421,7 @@ def run_simulation() -> None:
                     """
                     
                     betting_round_loop_results = betting_round_loop(
-                        dealer_open_strategy_max=dealer_open_strategy_max,
-                        dealer_see_after_check_then_other_bets_strategy_max=dealer_see_after_check_then_other_bets_strategy_max,
-                        dealer_max_gain_per_deal=dealer_max_gain_per_deal,
-                        dealer_positive_gain_count=dealer_positive_gain_count,
-                        dealer_negative_gain_count=dealer_negative_gain_count,
-                        dealer_zero_gain_count=dealer_zero_gain_count,
-                        dealer_positive_gain_per_deal_total=dealer_positive_gain_per_deal_total,
-                        dealer_negative_gain_per_deal_total=dealer_negative_gain_per_deal_total,
+                        best_strategy=best_strategy,
                         dealer_and_non_dealer_strategies_list=dealer_and_non_dealer_strategies_list,
                         ante=ante,
                         bet=bet,
@@ -507,12 +507,7 @@ def run_simulation() -> None:
             Runs every strategy combination for the dealer (player2), i.e., every open and see-after-check strategy combination.  
             """
             # Reset the parameters used in the mid deal strategy loop 
-            non_dealer_max_gain: float =-100_000
-            non_dealer_positive_gain_count: int = 0
-            non_dealer_negative_gain_count: int = 0
-            non_dealer_zero_gain_count: int = 0
-            non_dealer_positive_gain_per_deal_total: int = 0
-            non_dealer_negative_gain_per_deal_total: int = 0
+            best_strategy = BestStrategyDetail()
             non_dealer_and_dealer_strategies_list: list[dict[str, float | list[list[int]]]] = []
                         
             # Loop through every possible non-dealer strategy and store the one with the most gain
@@ -526,14 +521,7 @@ def run_simulation() -> None:
                     """
                     
                     betting_round_loop_results = betting_round_loop(
-                        dealer_open_strategy_max=non_dealer_see_after_other_opens_cards_max,
-                        dealer_see_after_check_then_other_bets_strategy_max=non_dealer_open_after_other_checks_cards_max,
-                        dealer_max_gain_per_deal=non_dealer_max_gain,
-                        dealer_positive_gain_count=non_dealer_positive_gain_count,
-                        dealer_negative_gain_count=non_dealer_negative_gain_count,
-                        dealer_zero_gain_count=non_dealer_zero_gain_count,
-                        dealer_positive_gain_per_deal_total=non_dealer_positive_gain_per_deal_total,
-                        dealer_negative_gain_per_deal_total=non_dealer_negative_gain_per_deal_total,
+                        best_strategy=best_strategy,
                         dealer_and_non_dealer_strategies_list=non_dealer_and_dealer_strategies_list,
                         ante=ante,
                         bet=bet,
