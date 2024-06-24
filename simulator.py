@@ -16,17 +16,23 @@ from utilities import print_records
 
 
 class BestStrategyDetail:
-    def __init__(self):
-        self.max_gain_per_deal = -100_000
-        self.positive_gain_count = 0
-        self.negative_gain_count = 0
-        self.zero_gain_count = 0
-        self.positive_gain_per_deal_total = 0
-        self.negative_gain_per_deal_total = 0
-        self.open_strategy_max = []
-        self.see_strategy_max = []
+    def __init__(self) -> None:
+        self.max_gain_per_deal: float = -100_000
+        self.positive_gain_count: int = 0
+        self.negative_gain_count: int = 0
+        self.zero_gain_count: int = 0
+        self.positive_gain_per_deal_total: float = 0
+        self.negative_gain_per_deal_total: float = 0
+        self.open_strategy_max: list[int] = []
+        self.see_strategy_max: list[int] = []
 
-    def update(self, cash, num_deals, open_strategy, see_strategy):
+    def update(
+            self,
+            cash: int, 
+            num_deals: int, 
+            open_strategy: list[int], 
+            see_strategy: list[int]
+        ) -> None:
         # Update the maximum win per deal and the associated strategies
         if cash / num_deals > self.max_gain_per_deal:
             self.max_gain_per_deal = cash / num_deals
@@ -44,8 +50,6 @@ class BestStrategyDetail:
 
 # Runs the betting round loop for every possible card combination between dealer and non-dealer, all equally likely, and sums winnings over all
 def betting_round_loop(
-    best_strategy: BestStrategyDetail,
-    dealer_and_non_dealer_strategies_list: list[dict[str, float | list[list[int]]]],
     ante: int,
     bet: int,
     is_carry_pot: bool,
@@ -53,17 +57,19 @@ def betting_round_loop(
     non_dealer_see_strategy: list[int],
     non_dealer_open_strategy: list[int],
     dealer_see_strategy: list[int],
+    dealer_and_non_dealer_strategies_list: list[dict[str, float | list[list[int]]]],
 ) -> dict[str, int | float | list[int] | list[dict[str, float | list[list[int]]]]]:
 
     # Reset betting round parameters
-    dealer_cash: float = 0
-    non_dealer_cash: float = 0
+    dealer_cash_without_carries: float = 0
+    non_dealer_cash_without_carries: float = 0
+    dealer_cash_with_carries: float = 0
+    non_dealer_cash_with_carries: float = 0
     num_deals:int = 0
     num_dealer_wins: int = 0
     num_non_dealer_wins: int = 0
     num_pot_carries: int = 0
     num_pot_returns: int = 0
-    best_strategy = BestStrategyDetail()
     
     # Loop through every possible card combination between dealer and non-dealer, all equally likely, and sum winnings over all
     for dealer_card in range(1, CARD_HIGH_NUMBER + 1):
@@ -74,36 +80,36 @@ def betting_round_loop(
             
             pot:int = 0
             num_deals += 1
-            dealer_cash -= ante
-            non_dealer_cash -= ante
+            dealer_cash_without_carries -= ante
+            non_dealer_cash_without_carries -= ante
             pot += (2 * ante)
             if dealer_card in dealer_open_strategy:
                 # Dealer opens
                 logger.debug(f"Dealer opens with card: {dealer_card}")
-                dealer_cash -= bet
+                dealer_cash_without_carries -= bet
                 pot += bet
                 if non_dealer_card in non_dealer_see_strategy:
                     # Non-Dealer sees
                     logger.debug(f"Non-Dealer sees after Dealer opens with card: {non_dealer_card}")
-                    non_dealer_cash -= bet
+                    non_dealer_cash_without_carries -= bet
                     pot += bet
                     if dealer_card > non_dealer_card:
                         # Dealer wins
                         logger.debug(f"Dealer wins with card: {dealer_card}")
                         num_dealer_wins += 1
-                        dealer_cash += pot
+                        dealer_cash_without_carries += pot
                         pot = 0
                     else:
                         # Non-Dealer wins
                         logger.debug(f"Non-Dealer wins with card: {non_dealer_card}")
                         num_non_dealer_wins+= 1
-                        non_dealer_cash += pot
+                        non_dealer_cash_without_carries += pot
                         pot = 0
                 else:
                     # Non-Dealer folds => Dealer wins
                     logger.debug(f"Non-Dealer folds after Dealer opens with card: {non_dealer_card}")
                     num_dealer_wins += 1
-                    dealer_cash += pot
+                    dealer_cash_without_carries += pot
                     pot = 0
             else:
                 # Dealer checks and Non-Dealer decides to open or not
@@ -111,38 +117,38 @@ def betting_round_loop(
                 if non_dealer_card in non_dealer_open_strategy:
                     # Non-Dealer opens
                     logger.debug(f"Non-Dealer opens after Dealer checks with card: {non_dealer_card}")
-                    non_dealer_cash -= bet
+                    non_dealer_cash_without_carries -= bet
                     pot += bet
                     # Dealer decides to see the bet or not
                     if dealer_card in dealer_see_strategy:
                         # Dealer sees
                         logger.debug(f"Dealer sees after Non-Dealer opens with card: {dealer_card}")
-                        dealer_cash -= bet
+                        dealer_cash_without_carries -= bet
                         pot += bet
                         if dealer_card > non_dealer_card:
                             # Dealer wins
                             logger.debug(f"Dealer wins with card: {dealer_card}")
                             num_dealer_wins += 1
-                            dealer_cash += pot
+                            dealer_cash_without_carries += pot
                             pot = 0
                         else:
                             # Non-Dealer wins
                             logger.debug(f"Non-Dealer wins with card: {non_dealer_card}")
                             num_non_dealer_wins+= 1
-                            non_dealer_cash += pot
+                            non_dealer_cash_without_carries += pot
                             pot = 0
                     else:
                         # Dealer folds => Non-Dealer wins
                         logger.debug(f"Dealer folds after Non-Dealer opens with card: {dealer_card}")
                         num_non_dealer_wins+= 1
-                        non_dealer_cash += pot
+                        non_dealer_cash_without_carries += pot
                         pot = 0
                 else:
                     # Non-Dealer also checks => no winner
                     logger.debug(f"Non-Dealer also checks after Dealer checks with card: {non_dealer_card}")
                     # Reset the pot and ante for the next round
-                    dealer_cash += ante
-                    non_dealer_cash += ante
+                    dealer_cash_without_carries += ante
+                    non_dealer_cash_without_carries += ante
                     pot = 0
                     if is_carry_pot: 
                         # Pot carries forward
@@ -157,21 +163,21 @@ def betting_round_loop(
 
     # Divide carried pot between players for calculaton of one strategy comparison
     # Pot is divided at the end of the game for overall totals 
-    one_strategy_pot_carried = num_pot_carries * (2 * ante)
-    one_strategy_dealer_cash = dealer_cash
-    one_strategy_non_dealer_cash = non_dealer_cash
-    one_strategy_dealer_cash -= num_pot_carries * ante
-    one_strategy_non_dealer_cash -= num_pot_carries * ante
-    one_strategy_dealer_cash += one_strategy_pot_carried * num_dealer_wins / (num_dealer_wins + num_non_dealer_wins)
-    one_strategy_non_dealer_cash += one_strategy_pot_carried * num_non_dealer_wins / (num_dealer_wins + num_non_dealer_wins)
+    pot_carried = num_pot_carries * (2 * ante)
+    dealer_cash_with_carries = dealer_cash_without_carries
+    non_dealer_cash_with_carries = non_dealer_cash_without_carries
+    dealer_cash_with_carries -= num_pot_carries * ante
+    non_dealer_cash_with_carries -= num_pot_carries * ante
+    dealer_cash_with_carries += pot_carried * num_dealer_wins / (num_dealer_wins + num_non_dealer_wins)
+    non_dealer_cash_with_carries += pot_carried * num_non_dealer_wins / (num_dealer_wins + num_non_dealer_wins)
 
     print("\n")
     print(f"Betting round loop summary: Player1 / dealer open strategy: {dealer_open_strategy}")
     print(f"Betting round loop summary: Player1 / dealer see-after-check strategy: {dealer_see_strategy}")
     print(f"Betting round loop summary: Player2 / non-dealer see-after-open strategy: {non_dealer_see_strategy}")
     print(f"Betting round loop summary: Player2 / non-dealer open-after-check strategy: {non_dealer_open_strategy}")
-    print(f"Betting round loop summary: Number player1 / dealer gain per round: {round(one_strategy_dealer_cash / num_deals, 4)}")
-    print(f"Betting round loop summary: Number player2 / non-dealer gain per round: {round(one_strategy_non_dealer_cash / num_deals, 4)}")
+    print(f"Betting round loop summary: Number player1 / dealer gain per round: {round(dealer_cash_with_carries / num_deals, 4)}")
+    print(f"Betting round loop summary: Number player2 / non-dealer gain per round: {round(non_dealer_cash_with_carries / num_deals, 4)}")
     print(f"Betting round loop summary: Number player1 / dealer wins: {num_dealer_wins}")
     print(f"Betting round loop summary: Number player2 / non-dealer wins: {num_non_dealer_wins}")
     print(f"Betting round loop summary: Number pots carried: {num_pot_carries}")
@@ -181,32 +187,20 @@ def betting_round_loop(
     dealer_and_non_dealer_strategies_list.append({
         "Dealer Strategy": [dealer_open_strategy, dealer_see_strategy],
         "Non-Dealer Strategy": [non_dealer_see_strategy, non_dealer_open_strategy],
-        "Dealer Gain": round(one_strategy_dealer_cash / num_deals, 4),
-        "Non-Dealer Gain":  round(one_strategy_non_dealer_cash / num_deals, 4),
+        "Dealer Gain": round(dealer_cash_with_carries / num_deals, 4),
+        "Non-Dealer Gain":  round(non_dealer_cash_with_carries / num_deals, 4),
     })
-
-
-
-    best_strategy.update(one_strategy_dealer_cash, num_deals, dealer_open_strategy, dealer_see_strategy)
-      
-
 
     return  {
         "num_deals": num_deals,
         "num_dealer_wins": num_dealer_wins,
         "num_non_dealer_wins": num_non_dealer_wins,
-        "dealer_cash": dealer_cash,
-        "non_dealer_cash": non_dealer_cash,
+        "dealer_cash": dealer_cash_without_carries,
+        "dealer_cash_with_carries": dealer_cash_with_carries,
+        "non_dealer_cash": non_dealer_cash_without_carries,
+        "non_dealer_cash_with_carries": non_dealer_cash_with_carries,
         "num_pot_carries": num_pot_carries,
         "num_pot_returns": num_pot_returns,
-        "dealer_max_gain_per_deal": best_strategy.max_gain_per_deal,
-        "dealer_positive_gain_count": best_strategy.positive_gain_count,
-        "dealer_negative_gain_count": best_strategy.negative_gain_count,
-        "dealer_zero_gain_count": best_strategy.zero_gain_count,
-        "dealer_positive_gain_per_deal_total": best_strategy.positive_gain_per_deal_total,
-        "dealer_negative_gain_per_deal_total": best_strategy.negative_gain_per_deal_total,
-        "dealer_open_strategy_max": best_strategy.open_strategy_max,
-        "dealer_see_after_check_then_other_bets_strategy_max": best_strategy.see_strategy_max,
         "dealer_and_non_dealer_strategies_list": dealer_and_non_dealer_strategies_list,
     }
 
@@ -407,7 +401,7 @@ def run_simulation() -> None:
             """
             
             # Reset the parameters used in the mid deal strategy loop
-            best_strategy = BestStrategyDetail() 
+            best_strategy_dealer = BestStrategyDetail() 
             dealer_and_non_dealer_strategies_list: list[dict[str, float | list[list[int]]]] = []
 
             # Loop through every possible dealer strategy and store the one with the most gain            
@@ -421,8 +415,6 @@ def run_simulation() -> None:
                     """
                     
                     betting_round_loop_results = betting_round_loop(
-                        best_strategy=best_strategy,
-                        dealer_and_non_dealer_strategies_list=dealer_and_non_dealer_strategies_list,
                         ante=ante,
                         bet=bet,
                         is_carry_pot=is_carry_pot,
@@ -430,6 +422,14 @@ def run_simulation() -> None:
                         non_dealer_see_strategy=non_dealer_see_after_other_opens_strategy,
                         non_dealer_open_strategy= non_dealer_open_after_other_checks_strategy,
                         dealer_see_strategy=dealer_see_after_check_then_other_bets_strategy,
+                        dealer_and_non_dealer_strategies_list=dealer_and_non_dealer_strategies_list,
+                    )
+
+                    best_strategy_dealer.update(
+                        betting_round_loop_results["dealer_cash_with_carries"],
+                        betting_round_loop_results["num_deals"], 
+                        dealer_open_strategy,
+                        dealer_see_after_check_then_other_bets_strategy
                     )
 
                     # Add to overall totals
@@ -441,15 +441,15 @@ def run_simulation() -> None:
                     tot_player2_gain += betting_round_loop_results["non_dealer_cash"] # type: ignore
                     tot_pot_carries += betting_round_loop_results["num_pot_carries"] # type: ignore
                     tot_pot_returns += betting_round_loop_results["num_pot_returns"] # type: ignore
-                    dealer_max_gain_per_deal = betting_round_loop_results["dealer_max_gain_per_deal"] # type: ignore
-                    dealer_positive_gain_count = betting_round_loop_results["dealer_positive_gain_count"] # type: ignore
-                    dealer_negative_gain_count = betting_round_loop_results["dealer_negative_gain_count"] # type: ignore
-                    dealer_zero_gain_count = betting_round_loop_results["dealer_zero_gain_count"] # type: ignore
-                    dealer_positive_gain_per_deal_total = betting_round_loop_results["dealer_positive_gain_per_deal_total"] # type: ignore
-                    dealer_negative_gain_per_deal_total = betting_round_loop_results["dealer_negative_gain_per_deal_total"] # type: ignore
-                    dealer_open_strategy_max = betting_round_loop_results["dealer_open_strategy_max"] # type: ignore
-                    dealer_see_after_check_then_other_bets_strategy_max = betting_round_loop_results["dealer_see_after_check_then_other_bets_strategy_max"]  # type: ignore
                     dealer_and_non_dealer_strategies_list = betting_round_loop_results["dealer_and_non_dealer_strategies_list"]  # type: ignore
+                    dealer_max_gain_per_deal = best_strategy_dealer.max_gain_per_deal
+                    dealer_positive_gain_count = best_strategy_dealer.positive_gain_count
+                    dealer_negative_gain_count = best_strategy_dealer.negative_gain_count
+                    dealer_zero_gain_count = best_strategy_dealer.zero_gain_count
+                    dealer_positive_gain_per_deal_total = best_strategy_dealer.positive_gain_per_deal_total
+                    dealer_negative_gain_per_deal_total = best_strategy_dealer.negative_gain_per_deal_total
+                    dealer_open_strategy_max = best_strategy_dealer.open_strategy_max
+                    dealer_see_after_check_then_other_bets_strategy_max = best_strategy_dealer.see_strategy_max
 
             # Print the results of one non-dealer strategy Vs all dealer strategies
             print(f"\nThe list of dealer strategies tested on the mid loop against one non-dealer strategy")
@@ -507,7 +507,7 @@ def run_simulation() -> None:
             Runs every strategy combination for the dealer (player2), i.e., every open and see-after-check strategy combination.  
             """
             # Reset the parameters used in the mid deal strategy loop 
-            best_strategy = BestStrategyDetail()
+            best_strategy_non_dealer = BestStrategyDetail()
             non_dealer_and_dealer_strategies_list: list[dict[str, float | list[list[int]]]] = []
                         
             # Loop through every possible non-dealer strategy and store the one with the most gain
@@ -521,7 +521,6 @@ def run_simulation() -> None:
                     """
                     
                     betting_round_loop_results = betting_round_loop(
-                        best_strategy=best_strategy,
                         dealer_and_non_dealer_strategies_list=non_dealer_and_dealer_strategies_list,
                         ante=ante,
                         bet=bet,
@@ -531,6 +530,13 @@ def run_simulation() -> None:
                         non_dealer_open_strategy= non_dealer_open_after_other_checks_strategy,
                         dealer_see_strategy=dealer_see_after_check_then_other_bets_strategy,
                     )
+      
+                    best_strategy_non_dealer.update(
+                        betting_round_loop_results["non_dealer_cash_with_carries"],
+                        betting_round_loop_results["num_deals"], 
+                        non_dealer_open_after_other_checks_strategy,
+                        non_dealer_see_after_other_opens_strategy
+                    )      
                     
                     # Add to overall totals
                     # Note: For overall totals the pot is divided at the overall level
@@ -541,15 +547,16 @@ def run_simulation() -> None:
                     tot_player1_gain += betting_round_loop_results["non_dealer_cash"] # type: ignore
                     tot_pot_carries += betting_round_loop_results["num_pot_carries"] # type: ignore
                     tot_pot_returns += betting_round_loop_results["num_pot_returns"] # type: ignore
-                    non_dealer_max_gain = betting_round_loop_results["dealer_max_gain_per_deal"] # type: ignore
-                    non_dealer_positive_gain_count = betting_round_loop_results["dealer_positive_gain_count"] # type: ignore
-                    non_dealer_negative_gain_count = betting_round_loop_results["dealer_negative_gain_count"] # type: ignore
-                    non_dealer_zero_gain_count = betting_round_loop_results["dealer_zero_gain_count"] # type: ignore
-                    non_dealer_positive_gain_per_deal_total = betting_round_loop_results["dealer_positive_gain_per_deal_total"] # type: ignore
-                    non_dealer_negative_gain_per_deal_total = betting_round_loop_results["dealer_negative_gain_per_deal_total"] # type: ignore
-                    non_dealer_see_after_other_opens_cards_max = betting_round_loop_results["dealer_open_strategy_max"] # type: ignore
-                    non_dealer_open_after_other_checks_cards_max = betting_round_loop_results["dealer_see_after_check_then_other_bets_strategy_max"]  # type: ignore
                     non_dealer_and_dealer_strategies_list = betting_round_loop_results["dealer_and_non_dealer_strategies_list"]  # type: ignore
+                    non_dealer_max_gain_per_deal = best_strategy_non_dealer.max_gain_per_deal
+                    non_dealer_positive_gain_count = best_strategy_non_dealer.positive_gain_count
+                    non_dealer_negative_gain_count = best_strategy_non_dealer.negative_gain_count
+                    non_dealer_zero_gain_count = best_strategy_non_dealer.zero_gain_count
+                    non_dealer_positive_gain_per_deal_total = best_strategy_non_dealer.positive_gain_per_deal_total
+                    non_dealer_negative_gain_per_deal_total = best_strategy_non_dealer.negative_gain_per_deal_total
+                    non_dealer_open_after_other_checks_strategy_max = best_strategy_non_dealer.open_strategy_max
+                    non_dealer_see_after_other_opens_strategy_max = best_strategy_non_dealer.see_strategy_max
+
 
             # Print the results of one dealber strategy Vs all non-dealer strategies
             print(f"\nThe list of non-dealer strategies tested on the mid loop against one dealer strategy")
@@ -559,11 +566,11 @@ def run_simulation() -> None:
             non_dealer_best_strategies_per_dealer_strategy_list.append({
                 "D. Open Strat.": dealer_open_strategy,
                 "D. See Strat.": dealer_see_after_check_then_other_bets_strategy,
-                "Non D. Best See Strat.": non_dealer_see_after_other_opens_cards_max,
-                "Non D. Best Open Strat.": non_dealer_open_after_other_checks_cards_max,
-                "Non-Dealer Max Gain": round(non_dealer_max_gain,2),
+                "Non D. Best See Strat.": non_dealer_see_after_other_opens_strategy_max,
+                "Non D. Best Open Strat.": non_dealer_open_after_other_checks_strategy_max,
+                "Non-Dealer Max Gain": round(non_dealer_max_gain_per_deal, 4),
                 "Non D. +ve/zero/-ve Counts": [non_dealer_positive_gain_count, non_dealer_zero_gain_count, non_dealer_negative_gain_count],
-                "Non D. +ve/-ve Totals": [round((non_dealer_positive_gain_per_deal_total / num_deals), 2), round((non_dealer_negative_gain_per_deal_total / num_deals), 2)],
+                "Non D. +ve/-ve Totals": [round(non_dealer_positive_gain_per_deal_total, 4), round(non_dealer_negative_gain_per_deal_total, 4)],
 
             })
             
