@@ -30,15 +30,15 @@ CARD_HIGH_NUMBER = 9
 ANTE_BET: int = 10
 # Three allowed values for the opening bet
 OPEN_BET_OPTIONS: Bet_Options = {
-    "Min": ANTE_BET * 10,
-    "Med": ANTE_BET * 10,
-    "Max": ANTE_BET * 10,
+    "Min": ANTE_BET * 1,
+    "Med": ANTE_BET * 2,
+    "Max": ANTE_BET * 5,
 }
 # Three allowed amounts by which a bet can be raised
 RAISE_BET_OPTIONS: Bet_Options = {
     "Min": ANTE_BET * 1,
     "Med": ANTE_BET * 2,
-    "Max": ANTE_BET * 3,
+    "Max": ANTE_BET * 5,
 }
 # Number of raises allowed
 MAX_RAISES: int = 0
