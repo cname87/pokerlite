@@ -2,4 +2,8 @@
     // Set to allow very long terminal output
     "terminal.integrated.scrollback": 100000,
     "python.analysis.typeCheckingMode": "basic",
+    "cSpell.words": [
+        "pokerlite",
+        "Strat"
+    ],
 }

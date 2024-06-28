@@ -10,39 +10,29 @@ import logging
 import logging.config
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('simulator')
-
-from configuration import CARD_HIGH_NUMBER, ANTE_BET, OPEN_BET_OPTIONS, IS_CARRY_POT, BOLD, UNDERLINE, RESET
 from utilities import print_records
 
+from configuration import CARD_HIGH_NUMBER, BOLD, UNDERLINE, RESET
+from configuration import ANTE_BET, OPEN_BET_OPTIONS, IS_CARRY_POT
+from simulator_config import mode
+from simulator_config import player1_dealer_open_strategy_list, player1_dealer_see_after_check_then_other_bets_strategy_list, player1_non_dealer_open_after_other_checks_strategy_list, player1_non_dealer_see_after_other_opens_strategy_list, player2_dealer_open_strategy_list, player2_dealer_see_after_check_then_other_bets_strategy_list, player2_non_dealer_open_after_other_checks_strategy_list, player2_non_dealer_see_after_other_opens_strategy_list
 
-"""
-Overall game parameters are derived from the configuration file.
-"""
-# The ante bet
-ANTE: int = ANTE_BET
-# The opening bet options
-OPENING_BETS = {
-    "H": OPEN_BET_OPTIONS["Max"],
-    "M": OPEN_BET_OPTIONS["Med"],
-    "L": OPEN_BET_OPTIONS["Min"]
-}
-# True = carry the pot into the next round
-CARRY_POT: bool = IS_CARRY_POT
+
 
 
 class BestStrategyDetail:
     """
     Represents the details of the best player strategy in response to a chosen opponent's strategy.
     A range of player open/see strategies are tested against the chosen opponent strategy
-    and the best strategy is selected based on it having the maximqum gain per deal.
+    and the best strategy is selected based on it having the maximum gain per deal.
      
     Attributes:
         max_gain_per_deal (float): The win/loss per deal of the selected best strategy.
         positive_gain_count (int): How many of the tested player strategies ended with a positive gain.
         negative_gain_count (int): How many of the tested player strategies ended with a negative gain.
         zero_gain_count (int): How many of the player strategies ended with a zero gain.
-        positive_gain_per_deal_total (float): The sum of the win per deal over all tested player startegies.
-        negative_gain_per_deal_total (float): The sum of the loss per deal over all tested player startegies.
+        positive_gain_per_deal_total (float): The sum of the win per deal over all tested player strategies.
+        negative_gain_per_deal_total (float): The sum of the loss per deal over all tested player strategies.
         open_strategy_max (list[int]): The selected open strategy.
         see_strategy_max (list[int]): The selected see strategy.
     """
@@ -54,24 +44,24 @@ class BestStrategyDetail:
         self.zero_gain_count: int = 0
         self.positive_gain_per_deal_total: float = 0
         self.negative_gain_per_deal_total: float = 0
-        self.open_strategy_max: list[int] = []
+        self.open_strategy_max: dict[int, str] = {}
         self.see_strategy_max: list[int] = []
 
     def update(
             self,
             cash: int, 
             num_deals: int, 
-            open_strategy: list[int], 
+            open_strategy: dict[int, str], 
             see_strategy: list[int]
         ) -> None:
         """
-        Updates the best strategy details after test of a player's strtegy over a betting round
-        if the gain exceeeds that of the previously stored version. Also updates other details.
+        Updates the best strategy details after test of a player's strategy over a betting round
+        if the gain exceeds that of the previously stored version. Also updates other details.
 
         Args:
             cash (int): The win/loss amount after the betting round.
             num_deals (int): The number of deals in the betting round.
-            open_strategy (list[int]): The open strategy tested.
+            open_strategy (dict[int, str]): The open strategy tested.
             see_strategy (list[int]): The see strategy tested.
 
         Returns:
@@ -95,9 +85,9 @@ class BestStrategyDetail:
 
 # Runs the betting round loop for every possible card combination between dealer and non-dealer, all equally likely, and sums winnings over all
 def inner_betting_round_loop(
-    dealer_open_strategy: list[int],
+    dealer_open_strategy: dict[int, str],
     dealer_see_strategy: list[int],
-    non_dealer_open_strategy: list[int],
+    non_dealer_open_strategy: dict[int, str],
     non_dealer_see_strategy: list[int],
 ) -> dict[str, int | float]:
     
@@ -105,9 +95,9 @@ def inner_betting_round_loop(
     Runs all card variations of betting round between a dealer and a non-dealer.
 
     Args:
-        dealer_open_strategy (list[int]): The list of cards on which the dealer will open the betting round.
+        dealer_open_strategy (dict[str, int]): The list of cards on which the dealer will open the betting round.
         dealer_see_strategy (list[int]): The list of cards on which the dealer will see if the non-dealer opens.
-        non_dealer_open_strategy (list[int]): The list of cards on which the non-dealer will open if the dealer checks.
+        non_dealer_open_strategy (dict[str, int]): The list of cards on which the non-dealer will open if the dealer checks.
         non_dealer_see_strategy (list[int]): The list of cards on which the non-dealer will see when the dealer opens.
 
     Returns:
@@ -139,13 +129,13 @@ def inner_betting_round_loop(
             bet = 0            
             pot:int = 0
             num_deals += 1
-            dealer_cash_without_carries -= ANTE
-            non_dealer_cash_without_carries -= ANTE
-            pot += (2 * ANTE)
+            dealer_cash_without_carries -= ANTE_BET
+            non_dealer_cash_without_carries -= ANTE_BET
+            pot += (2 * ANTE_BET)
             if dealer_card in dealer_open_strategy:
                 # Dealer opens
                 logger.debug(f"Dealer opens with card: {dealer_card}")
-                bet = OPENING_BETS[dealer_open_strategy[dealer_card]]
+                bet = OPEN_BET_OPTIONS[dealer_open_strategy[dealer_card]]
                 dealer_cash_without_carries -= bet
                 pot += bet
                 if non_dealer_card in non_dealer_see_strategy:
@@ -177,7 +167,7 @@ def inner_betting_round_loop(
                 if non_dealer_card in non_dealer_open_strategy:
                     # Non-Dealer opens
                     logger.debug(f"Non-Dealer opens after Dealer checks with card: {non_dealer_card}")
-                    bet = OPENING_BETS[non_dealer_open_strategy[non_dealer_card]]
+                    bet = OPEN_BET_OPTIONS[non_dealer_open_strategy[non_dealer_card]]
                     non_dealer_cash_without_carries -= bet
                     pot += bet
                     # Dealer decides to see the bet or not
@@ -208,10 +198,10 @@ def inner_betting_round_loop(
                     # Non-Dealer also checks => no winner
                     logger.debug(f"Non-Dealer also checks after Dealer checks with card: {non_dealer_card}")
                     # Reset the pot and ante for the next round
-                    dealer_cash_without_carries += ANTE
-                    non_dealer_cash_without_carries += ANTE
+                    dealer_cash_without_carries += ANTE_BET
+                    non_dealer_cash_without_carries += ANTE_BET
                     pot = 0
-                    if CARRY_POT: 
+                    if IS_CARRY_POT: 
                         # Pot carries forward
                         # Take care of pot division outside the loop
                         num_pot_carries += 1
@@ -223,9 +213,9 @@ def inner_betting_round_loop(
     assert num_deals == num_dealer_wins + num_non_dealer_wins + num_pot_carries + num_pot_returns, "Deal count error"
 
     # Divide carried pot between players
-    pot_carried = num_pot_carries * (2 * ANTE)
-    dealer_cash_with_carries = dealer_cash_without_carries - (num_pot_carries * ANTE) + (pot_carried * num_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
-    non_dealer_cash_with_carries = non_dealer_cash_without_carries - (num_pot_carries * ANTE) + (pot_carried * num_non_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
+    pot_carried = num_pot_carries * (2 * ANTE_BET)
+    dealer_cash_with_carries = dealer_cash_without_carries - (num_pot_carries * ANTE_BET) + (pot_carried * num_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
+    non_dealer_cash_with_carries = non_dealer_cash_without_carries - (num_pot_carries * ANTE_BET) + (pot_carried * num_non_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
 
     logger.debug("\n")
     logger.debug(f"Betting round loop summary: Dealer open strategy: {dealer_open_strategy}")
@@ -251,10 +241,10 @@ def inner_betting_round_loop(
 
 
 def outer_setup_strategies_to_be_tested_loop(
-    innermost_type: str,
-    outermost_strategy_list: list[list[int]] = [],
+    player1_role: str,
+    outermost_strategy_list: list[dict[int, str]] = [],
     next_to_outermost_strategy_list: list[list[int]] = [],
-    next_to_innermost_strategy_list: list[list[int]] = [],
+    next_to_innermost_strategy_list: list[dict[int, str]] = [],
     innermost_strategy_list: list[list[int]] = [],
     tot_player1_wins: int = 0,
     tot_player2_wins: int = 0,
@@ -269,16 +259,16 @@ def outer_setup_strategies_to_be_tested_loop(
 
     Args:
         innermost_type (str): Whether player 1 is the 'dealer' or 'non_dealer'.
-        outermost_strategy_list (list[list[int]], optional): List of strategies for the outermost loop. Defaults to an empty list.
+        outermost_strategy_list (list[dict[int, str]], optional): List of strategies for the outermost loop. Defaults to an empty list.
         next_to_outermost_strategy_list (list[list[int]], optional): List of strategies for the next-to-outermost loop. Defaults to an empty list.
-        next_to_innermost_strategy_list (list[list[int]], optional): List of strategies for the next-to-innermost loop. Defaults to an empty list.
+        next_to_innermost_strategy_list (list[dict[int, str]], optional): List of strategies for the next-to-innermost loop. Defaults to an empty list.
         innermost_strategy_list (list[list[int]], optional): List of strategies for the innermost loop. Defaults to an empty list.
-        tot_player1_wins (int, optional): Total number of wins for player 1 across all betting rounds. Left as deafult 0.
-        tot_player2_wins (int, optional): Total number of wins for player 2 across all betting rounds. Left as deafult 0.
-        tot_player1_win_or_loss (float, optional): Total win or loss amount for player 1. Left as deafult 0.
-        tot_player2_win_or_loss (float, optional): Total win or loss amount for player 2. Left as deafult 0.
-        tot_pot_carries (int, optional): Total number of pot carries. Left as deafult 0.
-        tot_pot_returns (int, optional): Total number of pot returns. Left as deafult 0.
+        tot_player1_wins (int, optional): Total number of wins for player 1 across all betting rounds. Left as default 0.
+        tot_player2_wins (int, optional): Total number of wins for player 2 across all betting rounds. Left as default 0.
+        tot_player1_win_or_loss (float, optional): Total win or loss amount for player 1. Left as default 0.
+        tot_player2_win_or_loss (float, optional): Total win or loss amount for player 2. Left as default 0.
+        tot_pot_carries (int, optional): Total number of pot carries. Left as default 0.
+        tot_pot_returns (int, optional): Total number of pot returns. Left as default 0.
 
     Returns:
         dict[str, int | float]: A dictionary containing the simulation results.
@@ -295,16 +285,16 @@ def outer_setup_strategies_to_be_tested_loop(
             raise ValueError("Invalid type. Must be 'dealer' or 'non_dealer'.")
     
     num_deals: int = 0
-    cash_type = innermost_type + "_cash_with_carries"
-    deal_type = innermost_type
-    opposite_deal_type = get_opposite_type(innermost_type)
+    cash_type = player1_role + "_cash_with_carries"
+    deal_type = player1_role
+    opposite_deal_type = get_opposite_type(player1_role)
     
-    if innermost_type == "dealer":
-        print(f"{BOLD}{UNDERLINE}Testing a set of dealer strategies against each non-dealer strategy{RESET}")
-        print(f"{BOLD}{UNDERLINE}Player 1 is the dealer{RESET}")
-    elif innermost_type == "non_dealer":
-        print(f"{BOLD}{UNDERLINE}Testing a set of non-dealer strategies against each dealer strategy{RESET}")
-        print(f"{BOLD}{UNDERLINE}Player 1 is the non-dealer{RESET}")
+    if player1_role == "dealer":
+        logger.debug(f"{BOLD}{UNDERLINE}Testing a set of dealer strategies against each non-dealer strategy{RESET}")
+        logger.debug(f"{BOLD}{UNDERLINE}Player 1 is the dealer{RESET}")
+    elif player1_role == "non_dealer":
+        logger.debug(f"{BOLD}{UNDERLINE}Testing a set of non-dealer strategies against each dealer strategy{RESET}")
+        logger.debug(f"{BOLD}{UNDERLINE}Player 1 is the non-dealer{RESET}")
     else:
         raise ValueError("Invalid type. Must be 'dealer' or 'non_dealer'.")
 
@@ -316,10 +306,10 @@ def outer_setup_strategies_to_be_tested_loop(
 
     # Track the dealer/non-dealer strategies that provide maximum gain
     innermost_strategy_max: list[int] = []
-    next_to_innermost_strategy_max: list[int] = []
+    next_to_innermost_strategy_max: dict[int, str] = {}
     
     # Holds the best dealer/non-dealer strategy for each non-dealer/dealer strategy
-    best_innermost_strategies_per_outer_strategy_list: list[dict[str, float | list[int] | list[float]]] = []
+    best_innermost_strategies_per_outer_strategy_list: list[dict[str, float | dict[int, str] | list[int] | list[float]]] = []
     
     # Loop through each non-dealer/dealer strategy
     for outermost_strategy in outermost_strategy_list:
@@ -327,7 +317,7 @@ def outer_setup_strategies_to_be_tested_loop(
             
             # Reset the parameters used in the loop
             best_strategy = BestStrategyDetail() 
-            strategies_list: list[dict[str, float | list[list[int]]]] = []
+            strategies_list: list[dict[str, list[dict[int, str] | list[int]] | float]] = []
 
             # Loop through every possible dealer/non-dealer strategy and store the one with the most gain            
             for next_to_innermost_strategy in next_to_innermost_strategy_list:
@@ -338,13 +328,13 @@ def outer_setup_strategies_to_be_tested_loop(
                     Data is gathered and the strategy combination that maximizes gain is stored
                     """
                     
-                    if innermost_type == "dealer":
+                    if player1_role == "dealer":
                         # Set the dealer as the inner loop => finds the best dealer strategy for each non-dealer strategy
                         non_dealer_open_strategy = outermost_strategy
                         non_dealer_see_strategy = next_to_outermost_strategy
                         dealer_open_strategy = next_to_innermost_strategy
                         dealer_see_strategy = innermost_strategy
-                    elif innermost_type == "non_dealer":
+                    elif player1_role == "non_dealer":
                         # Set the non-dealer as the inner loop => finds the best non-dealer strategy for each dealer strategy
                         dealer_open_strategy = outermost_strategy
                         dealer_see_strategy = next_to_outermost_strategy
@@ -367,7 +357,7 @@ def outer_setup_strategies_to_be_tested_loop(
                     tot_player1_win_or_loss += cast(float, betting_round_loop_results[deal_type + "_cash_with_carries"])
                     tot_player2_win_or_loss += cast(float, betting_round_loop_results[opposite_deal_type + "_cash_with_carries"])
 
-                    # Add the dealer and non-dealer stratgeies and gains to a list
+                    # Add the dealer and non-dealer strategies and gains to a list
                     strategies_list.append({
                         "Dealer Open / See Strategy": [dealer_open_strategy, dealer_see_strategy],
                         "Non-Dealer Open / See Strategy": [non_dealer_open_strategy, non_dealer_see_strategy],
@@ -394,8 +384,9 @@ def outer_setup_strategies_to_be_tested_loop(
 
 
             # Print the results of one non-dealer/dealer strategy Vs all dealer/non-dealer strategies
-            print(f"\nThe list of {deal_type} strategies tested against one {opposite_deal_type} strategy")
-            print_records(strategies_list)
+            logger.debug(f"\nThe list of {deal_type} strategies tested against one {opposite_deal_type} strategy")
+            if logger.getEffectiveLevel() == logging.DEBUG: 
+                print_records(strategies_list)
 
             # Append the best dealer/non-dealer strategy for the tested non-dealer/dealer strategy to a list
             best_innermost_strategies_per_outer_strategy_list.append({
@@ -409,7 +400,7 @@ def outer_setup_strategies_to_be_tested_loop(
             })
 
     # Sort the dealer best strategies list by dealer max gain
-    best_innermost_strategies_per_outer_strategy_list.sort(key=lambda x:x[deal_type + " Max Gain"], reverse=True)
+    best_innermost_strategies_per_outer_strategy_list.sort(key=lambda x: float(cast(float, x[deal_type + " Max Gain"])), reverse=True)
     # For each non-dealer strategy print the optimum dealer strategy
     print("\n")
     print(f"{BOLD}{UNDERLINE}A list of each possible {opposite_deal_type} strategy, with the following detail per {opposite_deal_type} strategy:{RESET}")
@@ -455,151 +446,18 @@ def run_simulation() -> None:
     - Set a list of strategies for player 1 and 2 and run.
     - The printed output details the best dealer strategy for each non-dealer strategy, and vie versa.
     """
-    
-    """
-    Player strategies are set in lists of cards for each betting scenario
-    """
-    # Possible strategies for player 1 when player 1 opens first
-    player1_dealer_open_strategy_list = [
-        {9: "H"},
-        {9: "M"},
-        {9: "L"},
-        {9: "H", 8: "H"},
-        {9: "M", 8: "M"},
-        {9: "L", 8: "L"},
-        {9: "H", 8: "H", 7: "H"},
-        {9: "M", 8: "M", 7: "M"},
-        {9: "L", 8: "L", 7: "L"},
-    #     {9: "H", 8: "H", 7: "H", 6: "H"},
-    #     {9: "H", 8: "H", 7: "H", 6: "M"},
-    #     {9: "H", 8: "H", 7: "M", 6: "M"},
-    #     {9: "H", 8: "M", 7: "M", 6: "M"},
-    #     {9: "M", 8: "M", 7: "M", 6: "M"},
-    #     {9: "M", 8: "M", 7: "M", 6: "L"},
-    #     {9: "M", 8: "M", 7: "L", 6: "L"},
-    #     {9: "M", 8: "L", 7: "L", 6: "L"},
-    #     {9: "L", 8: "L", 7: "L", 6: "L"},
-    ]
+ 
+    dict_strategies: dict[str, list[dict[int, str]] | list[list[int]]] = {
+        "player1_dealer_open_strategy_list": player1_dealer_open_strategy_list,
+        "player1_dealer_see_after_check_then_other_bets_strategy_list": player1_dealer_see_after_check_then_other_bets_strategy_list,
+        "player1_non_dealer_open_after_other_checks_strategy_list": player1_non_dealer_open_after_other_checks_strategy_list,
+        "player1_non_dealer_see_after_other_opens_strategy_list": player1_non_dealer_see_after_other_opens_strategy_list,
+        "player2_dealer_open_strategy_list": player2_dealer_open_strategy_list,
+        "player2_dealer_see_after_check_then_other_bets_strategy_list": player2_dealer_see_after_check_then_other_bets_strategy_list,
+        "player2_non_dealer_open_after_other_checks_strategy_list": player2_non_dealer_open_after_other_checks_strategy_list,
+        "player2_non_dealer_see_after_other_opens_strategy_list": player2_non_dealer_see_after_other_opens_strategy_list,  
+    }
 
-    # Possible strategies for player 1 when they have checked instead of opening and player 2 has opened.
-    player1_dealer_see_after_check_then_other_bets_strategy_list = [
-        [9],
-        [8,9],
-        [7,8,9],
-        [6,7,8,9],
-        [5,6,7,8,9],
-        [4,5,6,7,8,9],
-        [3,4,5,6,7,8,9],
-        [2,3,4,5,6,7,8,9],
-        [1,2,3,4,5,6,7,8,9],
-    ]
-    # Possible strategies for player 1 when player 2 opens first but checks instead of opening
-    player1_non_dealer_open_after_other_checks_strategy_list = [
-        {9: "H"},
-        {9: "M"},
-        {9: "L"},
-        {9: "H", 8: "H"},
-        {9: "M", 8: "M"},
-        {9: "L", 8: "L"},
-        {9: "H", 8: "H", 7: "H"},
-        {9: "M", 8: "M", 7: "M"},
-        {9: "L", 8: "L", 7: "L"},
-    #     {9: "H", 8: "H", 7: "H", 6: "H"},
-    #     {9: "H", 8: "H", 7: "H", 6: "M"},
-    #     {9: "H", 8: "H", 7: "M", 6: "M"},
-    #     {9: "H", 8: "M", 7: "M", 6: "M"},
-    #     {9: "M", 8: "M", 7: "M", 6: "M"},
-    #     {9: "M", 8: "M", 7: "M", 6: "L"},
-    #     {9: "M", 8: "M", 7: "L", 6: "L"},
-    #     {9: "M", 8: "L", 7: "L", 6: "L"},
-    #     {9: "L", 8: "L", 7: "L", 6: "L"},
-    ]
-
-    # Possible strategies for player 1 when player 2 opens first    
-    player1_non_dealer_see_after_other_opens_strategy_list = [
-        [9],
-        [8,9],
-        [7,8,9],
-        [6,7,8,9],
-        [5,6,7,8,9],
-        [4,5,6,7,8,9],
-        [3,4,5,6,7,8,9],
-        [2,3,4,5,6,7,8,9],
-        [1,2,3,4,5,6,7,8,9],
-    ]
-
-    # Possible strategies for player 2 when player 2 opens first
-    player2_dealer_open_strategy_list = [
-        {9: "H"},
-        {9: "M"},
-        {9: "L"},
-        {9: "H", 8: "H"},
-        {9: "M", 8: "M"},
-        {9: "L", 8: "L"},
-        {9: "H", 8: "H", 7: "H"},
-        {9: "M", 8: "M", 7: "M"},
-        {9: "L", 8: "L", 7: "L"},
-    #     {9: "H", 8: "H", 7: "H", 6: "H"},
-    #     {9: "H", 8: "H", 7: "H", 6: "M"},
-    #     {9: "H", 8: "H", 7: "M", 6: "M"},
-    #     {9: "H", 8: "M", 7: "M", 6: "M"},
-    #     {9: "M", 8: "M", 7: "M", 6: "M"},
-    #     {9: "M", 8: "M", 7: "M", 6: "L"},
-    #     {9: "M", 8: "M", 7: "L", 6: "L"},
-    #     {9: "M", 8: "L", 7: "L", 6: "L"},
-    #     {9: "L", 8: "L", 7: "L", 6: "L"},
-    ]
-    
-    # Possible strategies for player 2 when they have checked instead of opening and player 2 has opened.
-    player2_dealer_see_after_check_then_other_bets_strategy_list = [
-        [9],
-        [8,9],
-        [7,8,9],
-        [6,7,8,9],
-        [5,6,7,8,9],
-        [4,5,6,7,8,9],
-        [3,4,5,6,7,8,9],
-        [2,3,4,5,6,7,8,9],
-        [1,2,3,4,5,6,7,8,9],
-    ]
-    # Possible strategies for player 2 when player 1 opens first but checks instead of opening
-    player2_non_dealer_open_after_other_checks_strategy_list = [
-        {9: "H"},
-        {9: "M"},
-        {9: "L"},
-        {9: "H", 8: "H"},
-        {9: "M", 8: "M"},
-        {9: "L", 8: "L"},
-        {9: "H", 8: "H", 7: "H"},
-        {9: "M", 8: "M", 7: "M"},
-        {9: "L", 8: "L", 7: "L"},
-    #     {9: "H", 8: "H", 7: "H", 6: "H"},
-    #     {9: "H", 8: "H", 7: "H", 6: "M"},
-    #     {9: "H", 8: "H", 7: "M", 6: "M"},
-    #     {9: "H", 8: "M", 7: "M", 6: "M"},
-    #     {9: "M", 8: "M", 7: "M", 6: "M"},
-    #     {9: "M", 8: "M", 7: "M", 6: "L"},
-    #     {9: "M", 8: "M", 7: "L", 6: "L"},
-    #     {9: "M", 8: "L", 7: "L", 6: "L"},
-    #     {9: "L", 8: "L", 7: "L", 6: "L"},
-    ]
-
-    # Possible strategies for player 2 when player 1 opens first
-    player2_non_dealer_see_after_other_opens_strategy_list = [
-        [9],
-        [8,9],
-        [7,8,9],
-        [6,7,8,9],
-        [5,6,7,8,9],
-        [4,5,6,7,8,9],
-        [3,4,5,6,7,8,9],
-        [2,3,4,5,6,7,8,9],
-        [1,2,3,4,5,6,7,8,9],
-    ]
-
-    """
-    Overall game totals that are summarised at the end.
-    """
     # Track player wins and round carries across both deals
     tot_player1_wins: int = 0
     tot_player2_wins: int = 0
@@ -607,8 +465,28 @@ def run_simulation() -> None:
     tot_player2_win_or_loss: float = 0
     tot_pot_carries: int = 0
     tot_pot_returns: int = 0
+    
+    # Set the comparisons to be carried out in the 2 runs
+    run2_dealer: str = ""
+    run2_non_dealer: str = ""
+    run2_player_role: str = ""
+    # Player1 is always the dealer and Player2 non-dealer in the first run
+    if mode == "compare_dealer_vs_non_dealer_strategies":
+        # Player1 stays as the dealer in the second run as you're comparing player1 dealer to player2 non-dealer
+        run2_dealer = "player1"
+        run2_non_dealer = "player2"
+        run2_player_role = "dealer"
+    elif mode == "compare_player1_vs_player2_strategies":
+        # Player1 is the non-dealer in the second run s you're comparing player1 non-dealer to player2 dealer
+        run2_dealer = "player2"
+        run2_non_dealer = "player1"
+        run2_player_role = "non_dealer"
+    else:
+        raise ValueError("Invalid value")
+
+    
     results = outer_setup_strategies_to_be_tested_loop(
-        innermost_type="dealer",
+        player1_role="dealer",
         outermost_strategy_list=player2_non_dealer_open_after_other_checks_strategy_list, # Non-dealer open strategy
         next_to_outermost_strategy_list=player2_non_dealer_see_after_other_opens_strategy_list, # Non-dealer see strategy
         next_to_innermost_strategy_list=player1_dealer_open_strategy_list, # Dealer open strategy
@@ -622,11 +500,11 @@ def run_simulation() -> None:
     tot_pot_returns += cast(int, results["tot_pot_returns"])
 
     results=outer_setup_strategies_to_be_tested_loop(
-        innermost_type="non_dealer",
-        outermost_strategy_list=player2_dealer_open_strategy_list, # Dealer open strategy
-        next_to_outermost_strategy_list=player2_dealer_see_after_check_then_other_bets_strategy_list, # Dealer see strategy
-        next_to_innermost_strategy_list=player1_non_dealer_open_after_other_checks_strategy_list, # Non-dealer open strategy
-        innermost_strategy_list=player1_non_dealer_see_after_other_opens_strategy_list, # Non-dealer see strategy
+        player1_role=run2_player_role,
+        outermost_strategy_list=cast(list[dict[int, str]], dict_strategies[run2_dealer + "_dealer_open_strategy_list"]), # Dealer open strategy
+        next_to_outermost_strategy_list=cast(list[list[int]], dict_strategies[run2_dealer + "_dealer_see_after_check_then_other_bets_strategy_list"]), # Dealer see strategy
+        next_to_innermost_strategy_list=cast(list[dict[int, str]], dict_strategies[run2_non_dealer + "_non_dealer_open_after_other_checks_strategy_list"]), # Non-dealer open strategy",
+        innermost_strategy_list=cast(list[list[int]], dict_strategies[run2_non_dealer + "_non_dealer_see_after_other_opens_strategy_list"]), # Non-dealer see strategy",
     )
     tot_player1_wins += cast(int, results["tot_player1_wins"])
     tot_player2_wins += cast(int, results["tot_player2_wins"])
@@ -642,13 +520,21 @@ def run_simulation() -> None:
     """            
     
     print("\n")
-    print(F"{BOLD}{UNDERLINE}Player1 vs Player2 Comparison{RESET}")
+
+    if mode == "compare_player1_vs_player2_strategies": 
+        print(F"{BOLD}{UNDERLINE}Player1 Dealer/Non-Dealer vs Player2 Dealer/Non-Dealer Comparison{RESET}")
+    elif mode == "compare_dealer_vs_non_dealer_strategies":
+        print(F"{BOLD}{UNDERLINE}Player1 Dealer vs Player2 Non-Dealer Comparison{RESET}")
+    else:
+        raise ValueError("Invalid value")
     print(f"Player1 dealer open strategy list: {player1_dealer_open_strategy_list}")
     print(f"Player1 dealer see-after-check strategy list: {player1_dealer_see_after_check_then_other_bets_strategy_list}")
-    print(f"Player1 non-dealer open-after-check strategy list: {player1_non_dealer_open_after_other_checks_strategy_list}")
-    print(f"Player1 non-dealer see-after-open strategy list: {player1_non_dealer_see_after_other_opens_strategy_list}")
-    print(f"Player2 dealer open strategy: {player2_dealer_open_strategy_list}")
-    print(f"Player2 dealer see-after-check strategy list: {player2_dealer_see_after_check_then_other_bets_strategy_list}")
+    # Player1 non-dealer and player2 strategies not relevant if comparing dealer vs non-dealers strategies
+    if mode == "compare_player1_vs_player2_strategies":
+        print(f"Player1 non-dealer open-after-check strategy list: {player1_non_dealer_open_after_other_checks_strategy_list}")
+        print(f"Player1 non-dealer see-after-open strategy list: {player1_non_dealer_see_after_other_opens_strategy_list}")
+        print(f"Player2 dealer open strategy: {player2_dealer_open_strategy_list}")
+        print(f"Player2 dealer see-after-check strategy list: {player2_dealer_see_after_check_then_other_bets_strategy_list}")
     print(f"Player2 non-dealer open-after-check strategy list: {player2_non_dealer_open_after_other_checks_strategy_list}")
     print(f"Player2 non-dealer see-after-open strategy list: {player2_non_dealer_see_after_other_opens_strategy_list}")
     print(f"Total player1 wins: {tot_player1_wins}")

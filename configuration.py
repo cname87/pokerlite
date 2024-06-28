@@ -9,9 +9,9 @@ from __future__ import annotations
 from typing import Literal, TypedDict
 
 class Bet_Options(TypedDict):
-    Min: int
-    Med: int
-    Max: int
+    L: int
+    M: int
+    H: int
 
 #############################################
 # Set the game configuration parameters here
@@ -23,22 +23,23 @@ CURRENT_PLAYER_FILE_NUMBERS: list[int] = [1, 4]
 # The name of the class to be defined in each player file 
 PLAYER_CLASS = "PlayerCode"
 # The game consists of this many betting rounds
-NUMBER_ROUNDS: int = 1_000_000
+NUMBER_ROUNDS: int = 1
 # Each player gets a card with a number between 1 and this value
 CARD_HIGH_NUMBER = 9
 # Ante amount paid into the pot at the start of each betting round by each player
 ANTE_BET: int = 10
 # Three allowed values for the opening bet
-OPEN_BET_OPTIONS: Bet_Options = {
-    "Min": ANTE_BET * 1,
-    "Med": ANTE_BET * 2,
-    "Max": ANTE_BET * 5,
+OPEN_BET_OPTIONS: dict[str, int] = {
+    "N": 0,
+    "L": ANTE_BET * 1,
+    "M": ANTE_BET * 2,
+    "H": ANTE_BET * 5,
 }
 # Three allowed amounts by which a bet can be raised
-RAISE_BET_OPTIONS: Bet_Options = {
-    "Min": ANTE_BET * 1,
-    "Med": ANTE_BET * 2,
-    "Max": ANTE_BET * 5,
+RAISE_BET_OPTIONS: dict[str, int] = {
+    "L": ANTE_BET * 1,
+    "M": ANTE_BET * 2,
+    "H": ANTE_BET * 5,
 }
 # Number of raises allowed
 MAX_RAISES: int = 0
@@ -59,8 +60,8 @@ class GameConfig(TypedDict):
     NUMBER_ROUNDS: int
     CARD_HIGH_NUMBER: int
     ANTE_BET: int
-    OPEN_BET_OPTIONS: Bet_Options
-    RAISE_BET_OPTIONS: Bet_Options
+    OPEN_BET_OPTIONS: dict[str, int]
+    RAISE_BET_OPTIONS: dict[str, int]
     MAX_RAISES: int
     IS_CARRY_POT: bool
 
@@ -92,7 +93,7 @@ class Dealer_Open_Bets(TypedDict):
 
 # List of card numbers that will trigger actions
 class Strategy(TypedDict):
-    Dealer_Opens_Bets: Dealer_Open_Bets
+    Dealer_Opens_Bets: list[dict[int, str]]
     Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks: list[dict[str, float]]
     Non_Dealer_Sees_after_Dealer_Opens: list[dict[str, float]]
     Non_Dealer_Opens_after_Dealer_Checks: list[dict[str, float]]
