@@ -499,19 +499,19 @@ def run_simulation() -> None:
     tot_pot_carries += cast(int, results["tot_pot_carries"])
     tot_pot_returns += cast(int, results["tot_pot_returns"])
 
-    results=outer_setup_strategies_to_be_tested_loop(
-        player1_role=run2_player_role,
-        outermost_strategy_list=cast(list[dict[int, str]], dict_strategies[run2_dealer + "_dealer_open_strategy_list"]), # Dealer open strategy
-        next_to_outermost_strategy_list=cast(list[list[int]], dict_strategies[run2_dealer + "_dealer_see_after_check_then_other_bets_strategy_list"]), # Dealer see strategy
-        next_to_innermost_strategy_list=cast(list[dict[int, str]], dict_strategies[run2_non_dealer + "_non_dealer_open_after_other_checks_strategy_list"]), # Non-dealer open strategy",
-        innermost_strategy_list=cast(list[list[int]], dict_strategies[run2_non_dealer + "_non_dealer_see_after_other_opens_strategy_list"]), # Non-dealer see strategy",
-    )
-    tot_player1_wins += cast(int, results["tot_player1_wins"])
-    tot_player2_wins += cast(int, results["tot_player2_wins"])
-    tot_player1_win_or_loss += cast(float, results["tot_player1_win_or_loss"])
-    tot_player2_win_or_loss += cast(float, results["tot_player2_win_or_loss"])
-    tot_pot_carries += cast(int, results["tot_pot_carries"])
-    tot_pot_returns += cast(int, results["tot_pot_returns"])
+    # results=outer_setup_strategies_to_be_tested_loop(
+    #     player1_role=run2_player_role,
+    #     outermost_strategy_list=cast(list[dict[int, str]], dict_strategies[run2_dealer + "_dealer_open_strategy_list"]), # Dealer open strategy
+    #     next_to_outermost_strategy_list=cast(list[list[int]], dict_strategies[run2_dealer + "_dealer_see_after_check_then_other_bets_strategy_list"]), # Dealer see strategy
+    #     next_to_innermost_strategy_list=cast(list[dict[int, str]], dict_strategies[run2_non_dealer + "_non_dealer_open_after_other_checks_strategy_list"]), # Non-dealer open strategy",
+    #     innermost_strategy_list=cast(list[list[int]], dict_strategies[run2_non_dealer + "_non_dealer_see_after_other_opens_strategy_list"]), # Non-dealer see strategy",
+    # )
+    # tot_player1_wins += cast(int, results["tot_player1_wins"])
+    # tot_player2_wins += cast(int, results["tot_player2_wins"])
+    # tot_player1_win_or_loss += cast(float, results["tot_player1_win_or_loss"])
+    # tot_player2_win_or_loss += cast(float, results["tot_player2_win_or_loss"])
+    # tot_pot_carries += cast(int, results["tot_pot_carries"])
+    # tot_pot_returns += cast(int, results["tot_pot_returns"])
     
     """
     The final section prints the totals over all games.

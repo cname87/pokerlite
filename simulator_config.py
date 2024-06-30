@@ -37,7 +37,7 @@ player1_dealer_open_strategy_list = [
     # {9: "H", 8: "H", 7: "H"},
     # {9: "M", 8: "M", 7: "M"},
     # {9: "L", 8: "L", 7: "L"},
-    # {9: "H", 8: "H", 7: "H", 6: "H"},
+    {9: "H", 8: "H", 7: "H", 6: "H"},
     # {9: "H", 8: "H", 7: "H", 6: "M"},
     # {9: "H", 8: "H", 7: "M", 6: "M"},
     # {9: "H", 8: "M", 7: "M", 6: "M"},
@@ -46,7 +46,7 @@ player1_dealer_open_strategy_list = [
     # {9: "M", 8: "M", 7: "L", 6: "L"},
     # {9: "M", 8: "L", 7: "L", 6: "L"},
     # {9: "L", 8: "L", 7: "L", 6: "L"},
-    {9: "H", 8: "H", 7: "H", 6: "H", 5: "H", 4: "H", 3: "H", 2: "H", 1: "H"},
+    # {9: "H", 8: "H", 7: "H", 6: "H", 5: "H", 4: "H", 3: "H", 2: "H", 1: "H"},
 ]
 
 # Possible strategies for player 1 when they have checked instead of opening and player 2 has opened.
@@ -54,12 +54,12 @@ player1_dealer_see_after_check_then_other_bets_strategy_list = [
     # [9],
     # [8,9],
     # [7,8,9],
-    # [6,7,8,9],
+    [6,7,8,9],
     # [5,6,7,8,9],
     # [4,5,6,7,8,9],
     # [3,4,5,6,7,8,9],
     # [2,3,4,5,6,7,8,9],
-    [1,2,3,4,5,6,7,8,9],
+    # [1,2,3,4,5,6,7,8,9],
 ]
 # Possible strategies for player 1 when player 2 opens first but checks instead of opening
 player1_non_dealer_open_after_other_checks_strategy_list = [
