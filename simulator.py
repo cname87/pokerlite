@@ -477,7 +477,7 @@ def run_simulation() -> None:
         run2_non_dealer = "player2"
         run2_player_role = "dealer"
     elif mode == "compare_player1_vs_player2_strategies":
-        # Player1 is the non-dealer in the second run s you're comparing player1 non-dealer to player2 dealer
+        # Player1 is the non-dealer in the second run as you're comparing player1 non-dealer to player2 dealer
         run2_dealer = "player2"
         run2_non_dealer = "player1"
         run2_player_role = "non_dealer"

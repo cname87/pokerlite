@@ -3,6 +3,7 @@
     "terminal.integrated.scrollback": 100000,
     "python.analysis.typeCheckingMode": "basic",
     "cSpell.words": [
+        "csvfile",
         "pokerlite",
         "Strat"
     ],

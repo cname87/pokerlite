@@ -35,14 +35,14 @@ class Player(ABC):
         self,
         cash_balance: int = 0,
         strategy: Strategy =  {
-            "Dealer_Opens_Bets": {
-                "Dealer_Opens_Min": [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 1.0}, {"8": 1.0}, {"9": 1.0}],
-                "Dealer_Opens_Med": [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 1.0}, {"9": 1.0}],
-                "Dealer_Opens_Max": [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 1.0}],
-            },
-            "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks":  [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 0.0}],
-            "Non_Dealer_Sees_after_Dealer_Opens": [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 0.0}],
-            "Non_Dealer_Opens_after_Dealer_Checks":  [{"1": 0.0}, {"2": 0.0}, {"3": 0.0}, {"4": 0.0}, {"5": 0.0}, {"6": 0.0}, {"7": 0.0}, {"8": 0.0}, {"9": 0.0}],
+            "Dealer_Opens_Bets":
+                {1: "L", 2: "L", 3: "L", 4: "L", 5: "L", 6: "L",7: "L", 8: "L", 9: "L"},
+            "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks":
+                {1: "L", 2: "L", 3: "L", 4: "L", 5: "L", 6: "L", 7: "L", 8: "L", 9: "L"},
+            "Non_Dealer_Opens_after_Dealer_Checks":
+                {1: "L", 2: "L", 3: "L", 4: "L", 5: "L", 6: "L", 7: "L", 8: "L", 9: "L"},
+            "Non_Dealer_Sees_after_Dealer_Opens":
+                {1: "L", 2: "L", 3: "L", 4: "L", 5: "L", 6: "L", 7: "L", 8: "L", 9: "L"},
         }
     ) -> None:
         self._cash_balance = cash_balance

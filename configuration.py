@@ -6,7 +6,10 @@ Author: Seán Young
 """
 
 from __future__ import annotations
+from datetime import datetime
+import logging
 from typing import Literal, TypedDict
+
 
 class Bet_Options(TypedDict):
     L: int
@@ -23,23 +26,25 @@ CURRENT_PLAYER_FILE_NUMBERS: list[int] = [1, 4]
 # The name of the class to be defined in each player file 
 PLAYER_CLASS = "PlayerCode"
 # The game consists of this many betting rounds
-NUMBER_ROUNDS: int = 1
+NUMBER_ROUNDS: int = 1_000_000
 # Each player gets a card with a number between 1 and this value
 CARD_HIGH_NUMBER = 9
 # Ante amount paid into the pot at the start of each betting round by each player
 ANTE_BET: int = 10
 # Three allowed values for the opening bet
 OPEN_BET_OPTIONS: dict[str, int] = {
-    "N": 0,
-    "L": ANTE_BET * 1,
-    "M": ANTE_BET * 2,
-    "H": ANTE_BET * 5,
+    "N": 0, # No bet
+    "L": ANTE_BET * 1, # Open with the low amount
+    "M": ANTE_BET * 2, # Open with the medium amount
+    "H": ANTE_BET * 5, # Open with the high amount
 }
 # Three allowed amounts by which a bet can be raised
-RAISE_BET_OPTIONS: dict[str, int] = {
-    "L": ANTE_BET * 1,
-    "M": ANTE_BET * 2,
-    "H": ANTE_BET * 5,
+SEE_BET_OPTIONS: dict[str, int] = {
+    "N": 0, # No bet
+    "S": 1, # See the bet
+    "L": OPEN_BET_OPTIONS["L"], # Raise the bet by the low amount
+    "M": OPEN_BET_OPTIONS["M"], # Raise the bet by the medium amount
+    "H": OPEN_BET_OPTIONS["H"], # Raise the bet by the high amount
 }
 # Number of raises allowed
 MAX_RAISES: int = 0
@@ -61,7 +66,7 @@ class GameConfig(TypedDict):
     CARD_HIGH_NUMBER: int
     ANTE_BET: int
     OPEN_BET_OPTIONS: dict[str, int]
-    RAISE_BET_OPTIONS: dict[str, int]
+    SEE_BET_OPTIONS: dict[str, int]
     MAX_RAISES: int
     IS_CARRY_POT: bool
 
@@ -72,7 +77,7 @@ GAME_CONFIG: GameConfig = {
     "CARD_HIGH_NUMBER": CARD_HIGH_NUMBER,
     "ANTE_BET": ANTE_BET, 
     "OPEN_BET_OPTIONS": OPEN_BET_OPTIONS,
-    "RAISE_BET_OPTIONS": RAISE_BET_OPTIONS,
+    "SEE_BET_OPTIONS": SEE_BET_OPTIONS,
     "MAX_RAISES": MAX_RAISES,
     "IS_CARRY_POT": IS_CARRY_POT
 }
@@ -82,21 +87,12 @@ TypeForGameState = Literal["Game Start", "Card", "Ante", "Round Start", "Checked
 TypeForBetType = Literal["Ante", "Check", "Open", "See", "Raise", "Fold"]
 TypeForPlayState = Literal["Dealer Opens", "Non-Dealer Opens after Dealer Checks", "Non-Dealer Sees after Dealer Opens", "Dealer Sees after Non-Dealer Opens after Dealer Checks", "Bet after Raise", "End Game"]
 
-# List of cards that will select the bet to be made
-class Dealer_Open_Bets(TypedDict):
-    # Opens with minimum allowed bet
-    Dealer_Opens_Min: list[dict[str, float]]
-    # Opens with the allowed bet between minimum and maximum
-    Dealer_Opens_Med: list[dict[str, float]]
-    # Opens with the maximum allowed bet
-    Dealer_Opens_Max: list[dict[str, float]]
-
 # List of card numbers that will trigger actions
 class Strategy(TypedDict):
-    Dealer_Opens_Bets: list[dict[int, str]]
-    Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks: list[dict[str, float]]
-    Non_Dealer_Sees_after_Dealer_Opens: list[dict[str, float]]
-    Non_Dealer_Opens_after_Dealer_Checks: list[dict[str, float]]
+    Dealer_Opens_Bets: dict[int, str]
+    Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks: dict[int, str]
+    Non_Dealer_Opens_after_Dealer_Checks: dict[int, str]
+    Non_Dealer_Sees_after_Dealer_Opens: dict[int, str]
 
 # Define type for a record of betting activity in a betting round
 class RoundRecord(TypedDict):
@@ -129,3 +125,14 @@ game_records: list[GameRecord] = [{
 BOLD = "\033[1m"
 UNDERLINE = "\033[4m"
 RESET = "\033[0m"
+
+if __name__ == "__main__":
+    from pokerlite import Game
+    from utilities import print_records
+    game_id: str = datetime.now().strftime("%d-%b-%Y %H:%M:%S")
+    game = Game(game_id)
+    game.play()
+    if game.logger.getEffectiveLevel() == logging.DEBUG: 
+        print_records(game.game_records)
+    # Download game record file to a file in the same directory
+    # download_game_records(game.game_records, 'game_records.csv')
