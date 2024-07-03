@@ -398,15 +398,24 @@ def outer_setup_strategies_to_be_tested_loop(
             })
 
     # Sort the dealer best strategies list by dealer max gain
-    best_innermost_strategies_per_outer_strategy_list.sort(key=lambda x: float(cast(float, x[deal_type + " Max Gain"])), reverse=True)
-    # For each non-dealer strategy print the optimum dealer strategy
-    print("\n")
-    print(f"{BOLD}{UNDERLINE}A list of each possible {opposite_deal_type} strategies, with the following detail per {opposite_deal_type} strategy:{RESET}")
-    print(f"- The {deal_type} strategy that maximizes {deal_type} gain against that {opposite_deal_type} strategy")
-    print(f"- The win/loss per deal of the {deal_type} strategy that maximizes {deal_type} gain against that {opposite_deal_type} strategy")
+    best_innermost_strategies_per_outer_strategy_list.sort(key=lambda x: float(cast(float, x[deal_type + " Max Gain"])), reverse=False)
+
+    
+    if mode == "compare_player1_vs_player2_strategies":
+        print(f"{BOLD}{UNDERLINE}Player1 is {deal_type} and Player2 is {opposite_deal_type}{RESET}")
+    print("\n")       
+    print(f"{BOLD}{UNDERLINE}A list of each possible open/see {opposite_deal_type} strategy, with the following detail for each {opposite_deal_type} open/deal strategy:{RESET}")
+    print(f"- The {deal_type} open/see strategy that maximizes {deal_type} gain against that {opposite_deal_type} open/see strategy")
+    print(f"- The win/loss per deal of the {deal_type} open/see strategy that maximizes {deal_type} gain against that {opposite_deal_type} open/see strategy")
     print(f"- The count of the {deal_type} strategies that result in +ve, zero, and -ve outcomes")
-    print(f"- The total {deal_type} win and lost per deal summed across all the {deal_type} strategies")
+    print(f"- The total {deal_type} win and loss per deal summed across all the {deal_type} strategies")
+    print(f"- The table is sorted with the minimum {deal_type} gain at the top, i.e. the {opposite_deal_type} would choose the strategy in the top row (and the {deal_type} would choose the corresponding calculated best option)")
+
+
+        
     print("\n")
+
+    # For each non-dealer strategy print the optimum dealer strategy
     print_records(best_innermost_strategies_per_outer_strategy_list)
     print("\n")
     
@@ -479,12 +488,10 @@ def run_simulation() -> None:
         # Player1 stays as the dealer in the second run as you're running the same dealer vs non-dealer comparison as run 1, with the only change is that the swap of outer loop to mid loop
         run2_dealer = "player1"
         run2_non_dealer = "player2"
-        run2_player1_role = "dealer"
     elif mode == "compare_player1_vs_player2_strategies":
         # Player1 is the non-dealer in the second run as you're comparing a full player1 to player2 game, and player1 was dealer in the first run
         run2_dealer = "player2"
         run2_non_dealer = "player1"
-        run2_player1_role = "non_dealer"
     else:
         raise ValueError("Invalid value")
 
@@ -504,7 +511,7 @@ def run_simulation() -> None:
     tot_pot_returns += cast(int, results["tot_pot_returns"])
 
     results=outer_setup_strategies_to_be_tested_loop(
-        player1_role=run2_player1_role,
+        player1_role="non_dealer",
         outermost_strategy_list=cast(list[dict[int, str]], dict_strategies[run2_dealer + "_dealer_open_strategy_list"]), # Dealer open strategy
         next_to_outermost_strategy_list=cast(list[list[int]], dict_strategies[run2_dealer + "_dealer_see_after_check_then_other_bets_strategy_list"]), # Dealer see strategy
         next_to_innermost_strategy_list=cast(list[dict[int, str]], dict_strategies[run2_non_dealer + "_non_dealer_open_after_other_checks_strategy_list"]), # Non-dealer open strategy",

@@ -23,15 +23,19 @@ class PlayerCode(Player):
         cash_balance: int = 0,
         strategy: Strategy =  {
             "Dealer_Opens_Bets":
-#                {9: "H", 8: "H", 7: "H", 6: "H", 5: "H", 4: "H", 3: "H", 2: "H", 1: "H"},
-                {9: "H", 8: "H", 7: "H", 6: "H"},
+                {9: 'M', 8: 'L', 7: 'L', 6: 'L'},
+                # {9: "H", 8: "H", 7: "H", 6: "H", 5: "H", 4: "H", 3: "H", 2: "H", 1: "H"},
+                # {9: "H", 8: "H", 7: "H", 6: "H"},
             "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks": 
-#                {9: "L", 8: "L", 7: "L", 6: "L", 5: "L", 4: "L", 3: "L", 2: "L", 1: "L"},
-                {9: "L", 8: "L", 7: "L", 6: "L"},
+                {9: "H"},
+                # {9: "L", 8: "L", 7: "L", 6: "L", 5: "L", 4: "L", 3: "L", 2: "L", 1: "L"},
+                # {9: "L", 8: "L", 7: "L", 6: "L"},
             "Non_Dealer_Opens_after_Dealer_Checks":
-                {9: "H", 8: "H", 7: "H", 6: "H", 5: "H", 4: "H", 3: "H", 2: "H", 1: "H"},
+                {9: 'H', 8: 'H', 7: 'H', 6: 'H', 5: 'H', 4: 'H'},
+                # {9: "H", 8: "H", 7: "H", 6: "H", 5: "H", 4: "H", 3: "H", 2: "H", 1: "H"},
             "Non_Dealer_Sees_after_Dealer_Opens":
-                {9: "L", 8: "L", 7: "L", 6: "L", 5: "L", 4: "L", 3: "L", 2: "L", 1: "L"},
+                {9: "L", 8: "L", 7: "L"},
+                # {9: "L", 8: "L", 7: "L", 6: "L", 5: "L", 4: "L", 3: "L", 2: "L", 1: "L"},
         }):
         super().__init__(
             cash_balance=cash_balance,
