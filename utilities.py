@@ -13,6 +13,7 @@ logger = logging.getLogger('utility')
 from typing import Any
 from collections import defaultdict
 import csv
+from itertools import islice
 
 from configuration import GameConfig, CARD_HIGH_NUMBER, ANTE_BET, OPEN_BET_OPTIONS, GameRecord
 
@@ -37,11 +38,19 @@ def validate_bet(
         raise ValueError(f"The difference between the bet of {bet} and the required bet {required_bet} was outside the min {game_config["OPEN_BET_OPTIONS"]["L"]} or max {game_config["SEE_BET_OPTIONS"]["H"]} bet limits")
 
 # Utility function to print list of records of type Round_Record or Game_Record
-def print_records(record_list: list[Any]) -> None:
+def print_records(record_list: list[Any], num_keys: int = 0) -> None:
 
     """
-    Takes a list of records, where the records are dictionaries of type Game_Record or Round_Record, and prints them out with each record being printed out on one row,
+    record_list (list[Round_Record] or list[Game_Record]): A list of records to print out. Each record is a dictionary.
+    num_keys (int): The number of keys of each dictionary record to print out. If 0, all keys are printed out. Default is 0.
+    
+    Takes a list of records, where the records are dictionaries of type Game_Record or Round_Record, and prints them out with each record being printed out on one row. If the parameter num_keys is not 0 then only the first 'num_keys' keys of each dictionary record are printed out.
+    
     """
+
+    # Print all dictionary keys if num_keys is 0
+    if num_keys == 0:
+        num_keys = len(record_list[0].keys())
 
     # Find the longest string for each column
     max_lengths: defaultdict[str, int] = defaultdict(int)
@@ -50,12 +59,22 @@ def print_records(record_list: list[Any]) -> None:
         print(f"ERROR: Attempting to print an empty list - continuing")
         return
 
-    for key in record_list[0].keys():
+    # Replace each dictionary or list in each record in the list with a string representation that has no spaces so that the width of the printed table is minimized    
+    for record in record_list:
+        for key in record.keys():
+            if isinstance(record[key], list):
+                record[key] = ''.join(map(str, record[key]))
+            elif isinstance(record[key], dict):
+                record[key] = ' '.join(f'{k}{v}' for k, v in record[key].items())
+            else:
+                record[key] = str(record[key])
+    
+    for key in islice(record_list[0].keys(), num_keys):
         max_lengths[key] = 0
 
     # Loop through each record to find the longest string for each key
     for record in record_list:
-        for key in list(record.keys()):
+        for key in list(islice(record.keys(), num_keys)):
             max_lengths[key] = max(max_lengths[key], len(str(record[key])), len(key))
 
     # Create a header

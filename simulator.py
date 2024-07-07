@@ -5,7 +5,7 @@ Runs a simulation of the pokerlite game.
 Author: Seán Young
 """
 
-from typing import cast
+from typing import Any, cast
 import logging
 import logging.config
 logging.config.fileConfig('logging.conf')
@@ -16,7 +16,7 @@ from configuration import CARD_HIGH_NUMBER, BOLD, UNDERLINE, RESET
 from configuration import ANTE_BET, OPEN_BET_OPTIONS, IS_CARRY_POT
 from simulator_config import mode
 from simulator_config import player1_dealer_open_strategy_list, player1_dealer_see_after_check_then_other_bets_strategy_list, player1_non_dealer_open_after_other_checks_strategy_list, player1_non_dealer_see_after_other_opens_strategy_list, player2_dealer_open_strategy_list, player2_dealer_see_after_check_then_other_bets_strategy_list, player2_non_dealer_open_after_other_checks_strategy_list, player2_non_dealer_see_after_other_opens_strategy_list
-
+from simulator_config import NUM_KEYS_TO_PRINT
 
 class BestStrategyDetail:
     """
@@ -303,7 +303,7 @@ def outer_strategies_to_be_tested_loop(
     next_to_innermost_strategy_max: dict[int, str] = {}
     
     # Holds the best dealer/non-dealer strategy for each non-dealer/dealer strategy
-    best_innermost_strategies_per_outer_strategy_list: list[dict[str, float | dict[int, str] | list[int] | list[float]]] = []
+    best_innermost_strategies_per_outer_strategy_list: list[Any] = []
     
     # Loop through each non-dealer/dealer strategy
     for outermost_strategy in outermost_strategy_list:
@@ -391,34 +391,36 @@ def outer_strategies_to_be_tested_loop(
 
             # Append the best dealer/non-dealer strategy for the tested non-dealer/dealer strategy to a list
             best_innermost_strategies_per_outer_strategy_list.append({
-                set_up["outer_loop"] + " Open Strat.": outermost_strategy,
-                set_up["outer_loop"] + " See Strat.": next_to_outermost_strategy,
-                set_up["inner_loop"] + " Best Open Strat.": next_to_innermost_strategy_max,
-                set_up["inner_loop"] + " Best See Strat.": innermost_strategy_max,
-                set_up["inner_loop"] + " Max Gain": round(max_gain_per_deal, 4),
-                set_up["inner_loop"] + " +ve/0/-ve Counts": [positive_gain_count, zero_gain_count, negative_gain_count],
-                set_up["inner_loop"] + " +ve/-ve Totals": [round((positive_gain_per_deal_total), 4), round((negative_gain_per_deal_total), 4)],
+                set_up["outer_loop"] + " Open S.": outermost_strategy,
+                set_up["outer_loop"] + " See S.": next_to_outermost_strategy,
+                set_up["inner_loop"] + " Best Open S.": next_to_innermost_strategy_max,
+                set_up["inner_loop"] + " Best See S.": innermost_strategy_max,
+                set_up["inner_loop"] + " Max": round(max_gain_per_deal, 4),
+                set_up["inner_loop"] + " +ve/0/-ve Cs":
+                    [positive_gain_count, " ", zero_gain_count, " ",  negative_gain_count],
+                set_up["inner_loop"] + " +ve/-ve Ts":
+                    [round((positive_gain_per_deal_total), 2), " ", round((negative_gain_per_deal_total), 2)],
             })
 
     # Sort the dealer best strategies list by dealer max gain
     best_innermost_strategies_per_outer_strategy_list.sort(
-        key=lambda x: float(cast(float, x[set_up["inner_loop"] + " Max Gain"])), 
+        key=lambda x: float(cast(float, x[set_up["inner_loop"] + " Max"])), 
         reverse=False
     )
     
     if mode == "compare_dealer_vs_non_dealer_strategies":
         print(f"{BOLD}{UNDERLINE}Testing a set of {set_up["inner_loop"]} strategies against each {set_up["outer_loop"]} strategy{RESET}")
-        print(f"A list of each possible {set_up["outer_loop"]} open/see strategy, with the following detail for each {set_up["outer_loop"]} open/see strategy:")
-        print(f"- The {set_up["inner_loop"]} open/see strategy that maximizes {set_up["inner_loop"]} gain against that {set_up["outer_loop"]} open/see strategy")
-        print(f"- The win/loss per deal of the {set_up["inner_loop"]} open/see strategy that maximizes {set_up["inner_loop"]} gain against that {set_up["outer_loop"]} open/see strategy")
-        print(f"- The count of the {set_up["inner_loop"]} strategies that result in +ve, zero, and -ve outcomes against that {set_up["outer_loop"]} open/see strategy")
+        print(f"A list with each possible {set_up["outer_loop"]} open/see strategy in the left column, with the following detail per {set_up["outer_loop"]} open/see strategy in the following columns:")
+        print(f"- The {set_up["inner_loop"]} open/see strategy that has the highest {set_up["inner_loop"]} gain against that {set_up["outer_loop"]} open/see strategy")
+        print(f"- The maximum gain per deal corresponding to the gain of the {set_up["inner_loop"]} open/see strategy that has the highest {set_up["inner_loop"]} gain against that {set_up["outer_loop"]} open/see strategy")
+        print(f"- The count of +ve, zero, and -ve outcomes against that {set_up["outer_loop"]} open/see strategy, counted across all the tested {set_up["inner_loop"]} strategies")
         print(f"- The total {set_up["inner_loop"]} win and loss per deal summed across all the tested {set_up["inner_loop"]} strategies")
-        print(f"- The table is sorted with the minimum {set_up["inner_loop"]} gain at the top, i.e. the {set_up["outer_loop"]} would choose the strategy in the top row (and the {set_up["inner_loop"]} would choose the corresponding calculated best option)")
-        print_records(best_innermost_strategies_per_outer_strategy_list)
+        print(f"- The table is sorted with an inverse sort of the maximum gain column, i.e. with the minimum {set_up["inner_loop"]} gain at the top. (Therefore, the {set_up["outer_loop"]} might choose the strategy in the top row, and the {set_up["inner_loop"]} might choose the corresponding calculated best option to that strategy)")
+        print_records(best_innermost_strategies_per_outer_strategy_list, NUM_KEYS_TO_PRINT)
         print("\n")
         
     if mode == "compare_player1_vs_player2_strategies":
-        print(f"{BOLD}{UNDERLINE}Testing player vs player: In this round {set_up["inner_player"]} as {set_up["inner_loop"]} against {set_up["outer_player"]} as {set_up["outer_loop"]}{RESET}")
+        print(f"{BOLD}{UNDERLINE}Testing player vs player: In this round {set_up["inner_player"]} is {set_up["inner_loop"]} against {set_up["outer_player"]} as {set_up["outer_loop"]}{RESET}")
         print(f"{set_up["inner_player"]} as {set_up["inner_loop"]} open strategy: {next_to_innermost_strategy}")
         print(f"{set_up["inner_player"]} as {set_up["inner_loop"]} see strategy: {innermost_strategy}")
         print(f"{set_up["outer_player"]} as {set_up["outer_loop"]} open strategy: {outermost_strategy}")
