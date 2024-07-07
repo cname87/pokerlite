@@ -16,7 +16,7 @@ from configuration import CARD_HIGH_NUMBER, BOLD, UNDERLINE, RESET
 from configuration import ANTE_BET, OPEN_BET_OPTIONS, IS_CARRY_POT
 from simulator_config import mode
 from simulator_config import player1_dealer_open_strategy_list, player1_dealer_see_after_check_then_other_bets_strategy_list, player1_non_dealer_open_after_other_checks_strategy_list, player1_non_dealer_see_after_other_opens_strategy_list, player2_dealer_open_strategy_list, player2_dealer_see_after_check_then_other_bets_strategy_list, player2_non_dealer_open_after_other_checks_strategy_list, player2_non_dealer_see_after_other_opens_strategy_list
-from simulator_config import NUM_KEYS_TO_PRINT
+from simulator_config import NUM_KEYS_TO_PRINT, NUM_ROWS_TO_PRINT
 
 class BestStrategyDetail:
     """
@@ -133,6 +133,7 @@ def inner_betting_round_loop(
             if dealer_card in dealer_open_strategy:
                 # Dealer opens
                 logger.debug(f"Dealer opens with card: {dealer_card}")
+                # Set the opening bet based on player strategy
                 bet = OPEN_BET_OPTIONS[dealer_open_strategy[dealer_card]]
                 dealer_cash_without_carries -= bet
                 pot += bet
@@ -416,7 +417,7 @@ def outer_strategies_to_be_tested_loop(
         print(f"- The count of +ve, zero, and -ve outcomes against that {set_up["outer_loop"]} open/see strategy, counted across all the tested {set_up["inner_loop"]} strategies")
         print(f"- The total {set_up["inner_loop"]} win and loss per deal summed across all the tested {set_up["inner_loop"]} strategies")
         print(f"- The table is sorted with an inverse sort of the maximum gain column, i.e. with the minimum {set_up["inner_loop"]} gain at the top. (Therefore, the {set_up["outer_loop"]} might choose the strategy in the top row, and the {set_up["inner_loop"]} might choose the corresponding calculated best option to that strategy)")
-        print_records(best_innermost_strategies_per_outer_strategy_list, NUM_KEYS_TO_PRINT)
+        print_records(best_innermost_strategies_per_outer_strategy_list, NUM_KEYS_TO_PRINT, NUM_ROWS_TO_PRINT)
         print("\n")
         
     if mode == "compare_player1_vs_player2_strategies":

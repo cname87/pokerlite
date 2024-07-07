@@ -38,19 +38,24 @@ def validate_bet(
         raise ValueError(f"The difference between the bet of {bet} and the required bet {required_bet} was outside the min {game_config["OPEN_BET_OPTIONS"]["L"]} or max {game_config["SEE_BET_OPTIONS"]["H"]} bet limits")
 
 # Utility function to print list of records of type Round_Record or Game_Record
-def print_records(record_list: list[Any], num_keys: int = 0) -> None:
+def print_records(record_list: list[Any], num_keys: int = 0, num_rows = 0) -> None:
 
     """
     record_list (list[Round_Record] or list[Game_Record]): A list of records to print out. Each record is a dictionary.
     num_keys (int): The number of keys of each dictionary record to print out. If 0, all keys are printed out. Default is 0.
+    num_rows (int): The number of rows to print out. If 0, all rows are printed out. Default is 0.
     
-    Takes a list of records, where the records are dictionaries of type Game_Record or Round_Record, and prints them out with each record being printed out on one row. If the parameter num_keys is not 0 then only the first 'num_keys' keys of each dictionary record are printed out.
+    Takes a list of records, where the records are dictionaries of type Game_Record or Round_Record, and prints them out with each record being printed out on one row. If the parameter num_keys is not 0 then only the first 'num_keys' keys of each dictionary record are printed out. If the parameter num_rows is not 0 then only the first 'num_rows' records are printed out.
     
     """
 
     # Print all dictionary keys if num_keys is 0
     if num_keys == 0:
         num_keys = len(record_list[0].keys())
+        
+    # Print all records if num_rows is 0
+    if num_rows == 0:
+        num_rows = len(record_list)
 
     # Find the longest string for each column
     max_lengths: defaultdict[str, int] = defaultdict(int)
@@ -73,7 +78,7 @@ def print_records(record_list: list[Any], num_keys: int = 0) -> None:
         max_lengths[key] = 0
 
     # Loop through each record to find the longest string for each key
-    for record in record_list:
+    for record in record_list[:num_rows]:
         for key in list(islice(record.keys(), num_keys)):
             max_lengths[key] = max(max_lengths[key], len(str(record[key])), len(key))
 
@@ -83,7 +88,7 @@ def print_records(record_list: list[Any], num_keys: int = 0) -> None:
     print("-" * len(header))
 
     # Print each record in the table
-    for record in record_list:
+    for record in record_list[:num_rows]:
         row = " | ".join(str(record[key]).ljust(max_lengths[key], " ") for key in max_lengths)
         print(row)
 
