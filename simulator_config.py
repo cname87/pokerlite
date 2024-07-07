@@ -12,7 +12,7 @@ Instructions:
 - Write the player1 and player2 strategies for mode two. 
 """
 
-# mode = "compare_dealer_vs_non_dealer_strategies"
+mode = "compare_dealer_vs_non_dealer_strategies"
 mode = "compare_player1_vs_player2_strategies"
 
    
@@ -112,45 +112,46 @@ non_dealer_see_after_other_opens_strategy_list = [
 Strategies for a player Vs player comparison are defined here.
 You should only define one strategy for each strategy type.
 """
-# Possible strategies for player 1 when player 1 opens first
+# The strategy for player 1 when player 1 opens first
 player1_dealer_open_strategy_list = [
     {9: 'M', 8: 'L', 7: 'L', 6: 'L'},
 ]
 
-# Possible strategies for player 1 when they have checked instead of opening and player 2 has opened.
+# The strategy for player 1 when they have checked instead of opening and player 2 has opened.
 player1_dealer_see_after_check_then_other_bets_strategy_list = [
     [9],
 ]
-# Possible strategies for player 1 when player 2 opens first but checks instead of opening
+# The strategy for player 1 when player 2 opens first but checks instead of opening
 player1_non_dealer_open_after_other_checks_strategy_list = [
-    {9: 'H', 8: 'H', 7: 'H', 6: 'H', 5: 'H', 4: 'H'},
+    {9: 'H', 8: 'H', 7: 'H', 6: 'H', 5: 'H'},
 ]
 
-# Possible strategies for player 1 when player 2 opens first    
+# The strategy for player 1 when player 2 opens first    
 player1_non_dealer_see_after_other_opens_strategy_list = [
-    [9,8,7],
+    [9,8],
 ]
 
-# Possible strategies for player 2 when player 2 opens first
+# The strategy for player 2 when player 2 opens first
 player2_dealer_open_strategy_list = [
     {9: 'M', 8: 'L', 7: 'L', 6: 'L'},
 ]
 
-# Possible strategies for player 2 when they have checked instead of opening and player 2 has opened.
+# The strategy for player 2 when they have checked instead of opening and player 2 has opened.
 player2_dealer_see_after_check_then_other_bets_strategy_list = [
     [9],
 ]
-# Possible strategies for player 2 when player 1 opens first but checks instead of opening
+# The strategy for player 2 when player 1 opens first but checks instead of opening
 player2_non_dealer_open_after_other_checks_strategy_list = [
-    {9: 'H', 8: 'H', 7: 'H', 6: 'H', 5: 'H'},
+    {9: 'H', 8: 'H', 7: 'H', 6: 'H', 5: 'H', 4: 'H'},
 ]
 
-# Possible strategies for player 2 when player 1 opens first
+# The strategy for player 2 when player 1 opens first
 player2_non_dealer_see_after_other_opens_strategy_list = [
-    [9,8],
+    [9,8,7],
 ]
 
 
+# In mode one replace the player1 dealer and non-dealer strategies with  dealer/non-dealer strategies to be tested
 if mode == "compare_dealer_vs_non_dealer_strategies":
     player1_dealer_open_strategy_list = dealer_open_strategy_list
     player1_dealer_see_after_check_then_other_bets_strategy_list = dealer_see_after_check_then_other_bets_strategy_list
