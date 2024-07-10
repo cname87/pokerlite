@@ -4,6 +4,7 @@
     "python.analysis.typeCheckingMode": "basic",
     "cSpell.words": [
         "csvfile",
+        "linprog",
         "pokerlite",
         "Strat"
     ],
