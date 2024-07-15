@@ -42,9 +42,9 @@ def calc_optimal_strategy_combo(strategy_results_matrix, player_doing_analysis):
     sum_of_prob_eq = np.array([1]) # The sum of the percentages must be 1
     
     """
-    player_doing_analysis = "P1"
-    Example where a matrix of P1 gain values are supplied and P2 wants to minimize the maximum value across all columns.:
     
+    A matrix of gain values for p1 vs P2 strategies is supplied where the values are +ve for P1 gain / -ve for P2 gain.
+    Example:
         Player          P1		
             Strategy    S1	    S2	    S3
                 Prob.
@@ -53,76 +53,66 @@ def calc_optimal_strategy_combo(strategy_results_matrix, player_doing_analysis):
             S3	0.00	2	    -1	    -1
             SUM:      -0.14   -0.29   -0.14			
 
-    Values are P1s gain, where +ve = P1 gain, so P2 wants to minimize the maximum value across all columns 
-    Sum of each row is less than max Max
-    p1x1 + p2x2 < Max
-    p1x1 + p2x2 - Max < 0
-    Minimize Mex
-    Coefficients: 
-    1, 1, -1
+    player_doing_analysis = "P2"    
+    P2 wants to minimize the maximum possible value across all P1 strategies, i.e. across all columns.
+    Note that the strategies for the equations are contained in the columns of the matrix, so we must transpose the to set up a set of equations in rows.   
+    The sum of each row is less than the maximum Max.
+    p1x1 + p2x2 + p3x3 < Max
+    p1x1 + p2x2 + p3x3 - Max < 0
+    Object: Minimize Max
+    Coefficients for the equations: 1, 1, 1, -1
 
-    player_doing_analysis = "P2"
-    Example where a matrix of P2 gain values are supplied and P1 wants to maximize the minimum value across all columns.:
-
-        Player          P1			
-            Strategy    S1	    S2	    S3	
-                Prob.	0.71	0.00	0.29	1.00
-        P2	S1		    1	    -2	    -3	
-            S2		    -1	    1	    2	
-            S3	    	2	    -1	    -1	
-
-    Values are P2s gain, where -ve = P2 gain, so P1 wants to maximize the minimum value across all columns 
-    Sum of each row is greater than min Min
-    p1x1 + p2x2 > Min
-    - p1x1 - p2x2 + Min < 0
-    Maximize Min => Minimize -Min
+    player_doing_analysis = "P1"
+    P1 wants to minimize the maximum possible value across all P2 strategies, i.e. across all rows.
+    Sum of each row is greater than the minimum Min.
+    p1x1 + p2x2 + p3x3 > Min
+    - p1x1 - p2x2 + p3x3 + Min < 0
     - p1x1 - p2x2 - (-Min) < 0
-    Coefficients:s
-    -1, -1, -1
-
+    Object: Maximize Min => Minimize -Min.  (linprog must minimize a value)
+    Coefficients for the equations: -1, -1, -1, -1
     """
     
-    if player_doing_analysis == "P1":
+    if player_doing_analysis == "P2":
         m = num_cols
         n = num_rows
         r = 1
-    elif player_doing_analysis == "P2":
+        strategy_results_matrix = strategy_results_matrix.T
+    elif player_doing_analysis == "P1":
         m = num_rows
         n = num_cols
         r = -1
-        strategy_results_matrix = strategy_results_matrix.T
     
     # Constraints: The probability values are multiplied by the corresponding strategy result and the maximum/minimum sum variable is multiplied by -1
-    strategy_sum_matrix = np.zeros((m, n + 1)) # num_cols rows of num_rows + 1 columns all containing 0
+    strategy_sum_matrix = np.zeros((m, n + 1))
     for j in range(m):
-        # Take the jth column vector from the input matrix and place it in the jth row of the sum matrix, while leaving the last element of the sum matrix row unchanged
-        strategy_sum_matrix[j, :-1] = r * strategy_results_matrix[:, j]
-        # Set the last element of the jth row of the sum matrix to -1, so that the maximum value is subtracted from the sum of the column values
+        strategy_sum_matrix[j, :-1] = r * strategy_results_matrix[j, :]
         strategy_sum_matrix[j, -1] = -1
     strategy_sum_result_matrix = np.zeros(m) # Each row equation is less than 0
     
-    # Bounds for the variables: The percentage variables between 0 and 1, i.e, (0,1), and the maximum value is unbounded, i.e. (None, None)
+    # Bounds for the variables: The percentage variables between 0 and 1, i.e, (0,1), and the maximum/minimum value is unbounded, i.e. (None, None)
     bounds = [(0, 1) for _ in range(num_rows)] + [(None, None)]
     
     # Solve the linear programming problem
     result = linprog(obj_fn, A_ub=strategy_sum_matrix, b_ub=strategy_sum_result_matrix, A_eq=sum_of_prob_fn, b_eq=sum_of_prob_eq, bounds=bounds, method='highs')
     
     if result.success:
-        
-        percentage_results = result.x[:-1] # Exclude the last variable (maximum sum) to get percentage values
-        gain_result = result.x[-1] # The last variable is the maximum sum value
+        percentage_results = result.x[:-1] # Exclude the last variable to get the percentage values
+        gain_result = result.x[-1] # The last variable is the maximum/minimum sum value
         return percentage_results, gain_result
     else:
         raise ValueError("Optimization failed")
 
 # Example usage
-M = np.array([
-    [1.0, -2.0, -3.0],
-    [-1.0, 1.0, 2.0],
-    [2.0, -1.0, -1.0]
-])
+if __name__ == "__main__":
+    M = np.array([
+        [1.0, -2.0, -3.0],
+        [-1.0, 1.0, 2.0],
+        [2.0, -1.0, -1.0]
+    ])
+    P, calc_value = calc_optimal_strategy_combo(M, "P2")
+    print("P2 strategies optimal percentages:", [f"{num * 100:.2f}%" for num in P])
+    print("P2 strategies, P1's best-case gain:", f"{calc_value:.2f}")
 
-
-P, calc_value = calc_optimal_strategy_combo(M, "P2")
-print("Optimal percentages:", P)
-print("Best case opposing player's gain:", calc_value)
+    P, calc_value = calc_optimal_strategy_combo(M, "P1")
+    print("P1 strategies optimal percentages:", [f"{num * 100:.2f}%" for num in P])
+    print("P1 strategies, P2's best-case gain:", f"{calc_value:.2f}")
