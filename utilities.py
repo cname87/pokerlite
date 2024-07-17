@@ -106,3 +106,15 @@ def download_game_records(game_records: list[GameRecord], file_path: str) -> Non
         writer.writeheader()
         writer.writerows(game_records)
 
+
+def download_matrix(matrix: list[list[float]], file_path: str) -> None:
+    """
+    Downloads a matrix of results to a CSV file.
+    Args:
+        matrix (list[list[float]]): A list of lists of numbers.
+        file_path (str): The file path to save the CSV file.
+    """
+    with open(file_path, 'w', newline='') as file:
+        writer = csv.writer(file)
+        for row in matrix:
+            writer.writerow(row)

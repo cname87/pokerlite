@@ -8,18 +8,19 @@ Author: Seán Young
 from typing import Any, cast
 import logging
 import logging.config
-
-import numpy as np
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('simulator')
-from utilities import print_records
+import numpy as np
+
 
 from configuration import CARD_HIGH_NUMBER, BOLD, UNDERLINE, RESET
 from configuration import ANTE_BET, OPEN_BET_OPTIONS, IS_CARRY_POT
 from simulator_config import mode
 from simulator_config import player1_dealer_open_strategy_list, player1_dealer_see_after_check_then_other_bets_strategy_list, player1_non_dealer_open_after_other_checks_strategy_list, player1_non_dealer_see_after_other_opens_strategy_list, player2_dealer_open_strategy_list, player2_dealer_see_after_check_then_other_bets_strategy_list, player2_non_dealer_open_after_other_checks_strategy_list, player2_non_dealer_see_after_other_opens_strategy_list
 from simulator_config import NUM_KEYS_TO_PRINT, NUM_ROWS_TO_PRINT
-
+from matrix_manipulation import calc_optimal_strategy_combo
+from utilities import print_records, download_matrix
+        
 class BestStrategyDetail:
     """
     Represents the details of the best player strategy in response to a chosen opponent's strategy.
@@ -299,8 +300,7 @@ def outer_strategies_to_be_tested_loop(
     The inner loop has the two opposite strategies, i.e. non-dealer if dealer is in the outer loop.
     This allows the best dealer strategy to be found for each non-dealer strategy, and vice versa.
     """                
-    col_iteration = -1
-    row_iteration = -1
+
     # Track the dealer/non-dealer strategies that provide maximum gain
     innermost_strategy_max: list[int] = []
     next_to_innermost_strategy_max: dict[int, str] = {}
@@ -308,10 +308,14 @@ def outer_strategies_to_be_tested_loop(
     # Holds the best dealer/non-dealer strategy for each non-dealer/dealer strategy
     best_innermost_strategies_per_outer_strategy_list: list[Any] = []
 
+    # Set up to store all strategies and gains in a matrix
+    col_iteration = -1
+    row_iteration = -1
     num_columns = len(outermost_strategy_list) * len(next_to_outermost_strategy_list)
     num_rows = len(innermost_strategy_list) * len(next_to_innermost_strategy_list)
-    all_strategies_matrix = [[0 for _ in range(num_columns)] for _ in range(num_rows)]
-    all_strategies_list = [0 for _ in range(num_columns)]
+    strategies_list: list[Any] = [[[] for _ in range(num_columns + 3)] for _ in range(num_rows + 3)]
+    non_dealer_strategies_list: list[Any] = [[[] for _ in range(2)] for _ in range(num_rows)]
+    results_matrix: list[list[float]] = [[0 for _ in range(num_columns)] for _ in range(num_rows)]
     
     # Loop through each non-dealer/dealer strategy
     for outermost_strategy in outermost_strategy_list:
@@ -378,8 +382,13 @@ def outer_strategies_to_be_tested_loop(
                         "Non-Dealer Gain":  round(cast(int, betting_round_loop_results["non_dealer_cash_with_carries"]) / one_run_num_deals, 4),
                     })
 
-                    all_strategies_list[col_iteration] = [dealer_open_strategy, dealer_see_strategy]             
-                    all_strategies_matrix[row_iteration][col_iteration] = round(cast(float, betting_round_loop_results["dealer_cash_with_carries"]) / one_run_num_deals, 4)
+                    # Crate a matrix of results
+                    strategies_list[0][col_iteration + 3] = dealer_open_strategy
+                    strategies_list[1][col_iteration + 3] = dealer_see_strategy            
+                    strategies_list[row_iteration + 3][0] = non_dealer_open_strategy
+                    strategies_list[row_iteration + 3][1] = non_dealer_see_strategy
+
+                    results_matrix[row_iteration][col_iteration] = round(cast(float, betting_round_loop_results["dealer_cash_with_carries"]) / one_run_num_deals, 4)
                 
                     # Get the best strategy
                     best_strategy.update(
@@ -432,22 +441,35 @@ def outer_strategies_to_be_tested_loop(
         print(f"- The total {set_up["inner_loop"]} win and loss per deal summed across all the tested {set_up["inner_loop"]} strategies")
         print(f"- The table is sorted with an inverse sort of the maximum gain column, i.e. with the minimum {set_up["inner_loop"]} gain at the top. (Therefore, the {set_up["outer_loop"]} might choose the strategy in the top row, and the {set_up["inner_loop"]} might choose the corresponding calculated best option to that strategy)")
         print_records(best_innermost_strategies_per_outer_strategy_list, NUM_KEYS_TO_PRINT, NUM_ROWS_TO_PRINT)
-        # print(all_strategies_matrix)
         print("\n")
         
-        from matrix_manipulation import calc_optimal_strategy_combo
-        percentage_list, calc_value = calc_optimal_strategy_combo(np.array(all_strategies_matrix), "P2")
-        print("P2 strategies optimal percentages:", [f"{num * 100:.2f}%" for num in percentage_list])
-        print("P2 strategies, P1's best-case gain:", f"{calc_value:.2f}")
+        # Print the optimal strategy percentages and the best-case gains
+        percentage_list, calc_value = calc_optimal_strategy_combo(np.array(results_matrix), "P2")
+        for i, percentage in enumerate(percentage_list):
+            strategies_list[2][i + 3] = percentage
+        
+        print("Non-dealer strategies optimal percentages:", [f"{num * 100:.2f}%" for num in percentage_list])
+        print("Non-dealer strategies, dealer's best-case gain:", f"{calc_value:.2f}")
         for i in range(len(percentage_list)):
             if percentage_list[i] > 0:
-                print(f"{all_strategies_list[i]}: {percentage_list[i]}") 
-        percentage_list, calc_value = calc_optimal_strategy_combo(np.array(all_strategies_matrix), "P1")
-        print("P1 strategies optimal percentages:", [f"{num * 100:.2f}%" for num in percentage_list])
-        print("P1 strategies, P2's best-case gain:", f"{calc_value:.2f}")
+                print(f"Dealer open/see strategy: {strategies_list[0][i]}; Percentage: {percentage_list[i]}") 
+        percentage_list, calc_value = calc_optimal_strategy_combo(np.array(results_matrix), "P1")
+
+        # Copy percentage_list into a new column of non_dealer_strategies_list
+        for i, percentage in enumerate(percentage_list):
+            strategies_list[i + 3][2] = percentage
+            
+        for i, row in enumerate(results_matrix):
+            for j, value in enumerate(row):            
+                strategies_list[i + 3][j + 3] = value
+            
+        print("Dealer strategies optimal percentages:", [f"{num * 100:.2f}%" for num in percentage_list])
+        print("Dealer strategies, non-dealer's best-case gain:", f"{calc_value:.2f}")
         for i in range(len(percentage_list)):
             if percentage_list[i] > 0:
-                print(f"{all_strategies_list[i]}: {percentage_list[i]}") 
+                print(f"Non-dealer open/see strategy: {non_dealer_strategies_list[i][0]}; Percentage: {percentage_list[i]}") 
+                                                
+        download_matrix(strategies_list, "downloads/strategies.csv")
                                         
         
     if mode == "compare_player1_vs_player2_strategies":

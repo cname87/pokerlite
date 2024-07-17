@@ -7,7 +7,8 @@ def calc_optimal_strategy_combo(strategy_results_matrix, player_doing_analysis):
     """
     args: 
     - strategy_results_matrix (np array):
-    The input matrix is a matrix of results where each result is the outcome of a game with 2 players each playing a specific strategy. The matrix has 1 row for each strategy of player 2 and 1 column for each strategy of player 1, so that each element is at the intersection of two strategies and each element is the result of the game when the corresponding strategies are played by the corresponding players.
+    The input matrix is a matrix of results where each result is the outcome of a game with 2 players, one as dealer and one as non-dealer. The matrix has 1 column for each dealer strategy set, and 1 column for each non-dealer strategy set, so that each element is at the intersection of a dealer and non-dealer strategy set, and each element is the result of the game when the corresponding strategy sets are played.
+    
     - player_doing_analysis (str): "P1" or "P2"
     
     The goal is to find a set of percentages, one for each strategy of player 1, which add up to 100%, that meets the following condition.  
@@ -43,7 +44,7 @@ def calc_optimal_strategy_combo(strategy_results_matrix, player_doing_analysis):
     
     """
     
-    A matrix of gain values for p1 vs P2 strategies is supplied where the values are +ve for P1 gain / -ve for P2 gain.
+    A matrix of gain values for P1 vs P2 strategies is supplied where the values are +ve for P1 gain / -ve for P2 gain.
     Example:
         Player          P1		
             Strategy    S1	    S2	    S3
