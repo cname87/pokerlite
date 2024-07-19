@@ -314,7 +314,6 @@ def outer_strategies_to_be_tested_loop(
     num_columns = len(outermost_strategy_list) * len(next_to_outermost_strategy_list)
     num_rows = len(innermost_strategy_list) * len(next_to_innermost_strategy_list)
     strategies_list: list[Any] = [[[] for _ in range(num_columns + 3)] for _ in range(num_rows + 3)]
-    non_dealer_strategies_list: list[Any] = [[[] for _ in range(2)] for _ in range(num_rows)]
     results_matrix: list[list[float]] = [[0 for _ in range(num_columns)] for _ in range(num_rows)]
     
     # Loop through each non-dealer/dealer strategy
@@ -444,32 +443,29 @@ def outer_strategies_to_be_tested_loop(
         print("\n")
         
         # Print the optimal strategy percentages and the best-case gains
-        percentage_list, calc_value = calc_optimal_strategy_combo(np.array(results_matrix), "P2")
-        for i, percentage in enumerate(percentage_list):
-            strategies_list[2][i + 3] = percentage
-        
-        print("Non-dealer strategies optimal percentages:", [f"{num * 100:.2f}%" for num in percentage_list])
-        print("Non-dealer strategies, dealer's best-case gain:", f"{calc_value:.2f}")
-        for i in range(len(percentage_list)):
-            if percentage_list[i] > 0:
-                print(f"Dealer open/see strategy: {strategies_list[0][i]}; Percentage: {percentage_list[i]}") 
-        percentage_list, calc_value = calc_optimal_strategy_combo(np.array(results_matrix), "P1")
-
-        # Copy percentage_list into a new column of non_dealer_strategies_list
-        for i, percentage in enumerate(percentage_list):
+        non_dealer_percentage_list, dealer_best_gain = calc_optimal_strategy_combo(np.array(results_matrix), "non-dealer")
+        for i, percentage in enumerate(non_dealer_percentage_list):
             strategies_list[i + 3][2] = percentage
-            
+        
+        dealer_percentage_list, non_dealer_best_gain = calc_optimal_strategy_combo(np.array(results_matrix), "dealer")
+        for i, percentage in enumerate(dealer_percentage_list):
+            strategies_list[2][i + 3] = percentage
+
+        strategies_list[0][0] = "Best Gain"
+        strategies_list[1][0] = non_dealer_best_gain
+        strategies_list[0][1] = dealer_best_gain
+        strategies_list[1][1] = ""
+        strategies_list[2][2] = ""
+        strategies_list[0][2] = "Dealer Open"
+        strategies_list[1][2] = "Dealer See"
+        strategies_list[2][0] = "Non-Dealer Open"
+        strategies_list[2][1] = "Non-Dealer See"
+        
         for i, row in enumerate(results_matrix):
             for j, value in enumerate(row):            
                 strategies_list[i + 3][j + 3] = value
-            
-        print("Dealer strategies optimal percentages:", [f"{num * 100:.2f}%" for num in percentage_list])
-        print("Dealer strategies, non-dealer's best-case gain:", f"{calc_value:.2f}")
-        for i in range(len(percentage_list)):
-            if percentage_list[i] > 0:
-                print(f"Non-dealer open/see strategy: {non_dealer_strategies_list[i][0]}; Percentage: {percentage_list[i]}") 
                                                 
-        download_matrix(strategies_list, "downloads/strategies.csv")
+        download_matrix(strategies_list, "downloads/simulator-results.csv")
                                         
         
     if mode == "compare_player1_vs_player2_strategies":

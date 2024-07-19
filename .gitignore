@@ -2,6 +2,5 @@
 /__pycache__
 /.mypy_cache
 
-# Ignore game results files
-/game_records.csv
-/game_records-template.xlsx
+# Ignore the downloads folder
+/downloads
