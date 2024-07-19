@@ -18,8 +18,8 @@ Instructions:
 - Write the player1 and player2 strategies for mode two. 
 """
 
-mode = "compare_dealer_vs_non_dealer_strategies"
-# mode = "compare_player1_vs_player2_strategies"
+# mode = "compare_dealer_vs_non_dealer_strategies"
+mode = "compare_player1_vs_player2_strategies"
 
    
 """
