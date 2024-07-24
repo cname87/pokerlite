@@ -38,13 +38,12 @@ OPEN_BET_OPTIONS: dict[str, int] = {
     "M": ANTE_BET * 2, # Open with the medium amount
     "H": ANTE_BET * 5, # Open with the high amount
 }
-# Three allowed amounts by which a bet can be raised
-SEE_BET_OPTIONS: dict[str, int] = {
+# Factors by which a bet is multiplied to see or raise a bet
+SEE_BET_OPTIONS: dict[str, float] = {
     "N": 0, # No bet
     "S": 1, # See the bet
-    "L": OPEN_BET_OPTIONS["L"], # Raise the bet by the low amount
-    "M": OPEN_BET_OPTIONS["M"], # Raise the bet by the medium amount
-    "H": OPEN_BET_OPTIONS["H"], # Raise the bet by the high amount
+    "M": 1.5, # Medium raise 
+    "H": 2, # High raise
 }
 # Number of raises allowed
 MAX_RAISES: int = 0
@@ -66,7 +65,7 @@ class GameConfig(TypedDict):
     CARD_HIGH_NUMBER: int
     ANTE_BET: int
     OPEN_BET_OPTIONS: dict[str, int]
-    SEE_BET_OPTIONS: dict[str, int]
+    SEE_BET_OPTIONS: dict[str, float]
     MAX_RAISES: int
     IS_CARRY_POT: bool
 

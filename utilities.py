@@ -13,7 +13,7 @@ logger = logging.getLogger('utility')
 from typing import Any
 from collections import defaultdict
 import csv
-from itertools import islice
+from itertools import islice, product
 
 from configuration import GameConfig, CARD_HIGH_NUMBER, ANTE_BET, OPEN_BET_OPTIONS, GameRecord
 
@@ -92,6 +92,20 @@ def print_records(record_list: list[Any], num_keys: int = 0, num_rows = 0) -> No
         row = " | ".join(str(record[key]).ljust(max_lengths[key], " ") for key in max_lengths)
         print(row)
 
+def write_to_file(file_path: str) -> Any:
+    while True:
+        try:
+            # Attempt to open the file in write mode and return the file object
+            with open(file_path, 'w', newline='') as file:
+                return file
+        except PermissionError:
+            # If a PermissionError is encountered, ask the user to close the file
+            input(f"Please close the file {file_path} and press Enter to continue...")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            break  # Exit the loop for any other exception
+
+
 def download_game_records(game_records: list[GameRecord], file_path: str) -> None:
     """
     Downloads the game records to a CSV file.
@@ -101,7 +115,7 @@ def download_game_records(game_records: list[GameRecord], file_path: str) -> Non
     """
     fieldnames = game_records[0].keys()
 
-    with open(file_path, 'w', newline='') as csvfile:
+    with open(file_path, 'w', newline='')  as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(game_records)
@@ -114,7 +128,57 @@ def download_matrix(matrix: list[list[float]], file_path: str) -> None:
         matrix (list[list[float]]): A list of lists of numbers.
         file_path (str): The file path to save the CSV file.
     """
-    with open(file_path, 'w', newline='') as file:
-        writer = csv.writer(file)
-        for row in matrix:
-            writer.writerow(row)
+    try:
+        with open(file_path, 'w', newline='') as file:
+            writer = csv.writer(file)
+            for row in matrix:
+                writer.writerow(row)
+    except PermissionError:
+        input(f"Please close the file {file_path} and press Enter to continue...")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+def generate_possible_lists(length: int = 5, chars: str = 'HML') -> list[dict[int, str]]:
+    
+    """
+    Takes a length and a string of characters and generates a list of all possible lists from length 1 to the given length, where each element in each list is one of the characters in the provided string, and where each list is such that the elements only appear in the order that they appear in the provided string. The lists are sorted by length and then by the characters in the provided string.
+    Example: generate_possible_lists(3, 'ABC') returns: [A], [B], [A, A], [A, B], [B, B], [A, A, A], [A, A, B], [A, B, B], [B, B, B] 
+    
+    """
+    
+    def sort_lists_by_order(lists: list[list], sort_order: str) -> list[list]:
+        # Define a custom sort key function
+        def custom_sort_key(lst: list) -> tuple:
+            # Create a tuple of two elements: the list length and a tuple representing the sort order of each element in the list, e.g., if sort_order = "HML", then the element "L" in the list will be represented by 2 in the tuple
+            return (len(lst), tuple(sort_order.index(char) if char in sort_order else len(sort_order) for char in lst))        
+        # Sort the lists using the custom sort key
+        sorted_lists = sorted(lists, key=custom_sort_key)
+        return sorted_lists
+
+    def tuple_to_dict(tup: list[str]) -> dict:
+        # Convert a list to a dictionary with keys starting from 9 and decreasing
+        result_dict: dict = {}
+        # Iterate over the tuple with index
+        for index, value in enumerate(tup):
+            # Calculate key starting from 9 and decreasing
+            key = 9 - index
+            # Assign the value to the calculated key in the dictionary
+            result_dict[key] = value
+        return result_dict
+
+    # Use a set so only unique elements are added
+    all_possible_lists_set: set[tuple[str, ...]] = set()
+    for list_length in range(1, length + 1):  # Loop through lengths
+        # Generate all combinations of the possible characters for the current length
+        for combination in product(chars, repeat=list_length):
+            # Sort the combination and convert to a list
+            sorted_combination = sorted(combination, key=lambda x: chars.index(x))
+            # Add the sorted list to the set
+            # Only unique lists will be added due to the set data structure
+            # (Convert to tuple for immutability as a list cannot be added to a set)
+            all_possible_lists_set.add(tuple(sorted_combination))
+    # Convert each tuple back to a list and sort by the custom sort function
+    all_possible_lists = sort_lists_by_order([list(combination) for combination in all_possible_lists_set], chars)	
+    # Convert each list to a dictionary
+    all_possible_lists_dicts = [tuple_to_dict(combination) for combination in all_possible_lists]
+    return all_possible_lists_dicts
