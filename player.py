@@ -10,7 +10,7 @@ import random
 
 from components import Card
 from abc import ABC, abstractmethod
-from configuration import GameConfig, GAME_CONFIG, game_records, RoundRecord, GameRecord, TypeForPlayState, Strategy
+from configuration import GameConfig, GAME_CONFIG, game_records, PlayerList, RoundRecord, GameRecord, TypeForPlayState, Strategy
 
 class Player(ABC):
     """
@@ -36,15 +36,19 @@ class Player(ABC):
         cash_balance: int = 0,
         strategy: Strategy =  {
             "Dealer_Opens_Bets":
-                {1: "L", 2: "L", 3: "L", 4: "L", 5: "L", 6: "L",7: "L", 8: "L", 9: "L"},
-            "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks":
-                {1: "L", 2: "L", 3: "L", 4: "L", 5: "L", 6: "L", 7: "L", 8: "L", 9: "L"},
+                {},
+            "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks": 
+                {},
+            "Dealer_Sees_after_Non_Dealer_Raises_after_Dealer_Opens":
+                {},
             "Non_Dealer_Opens_after_Dealer_Checks":
-                {1: "L", 2: "L", 3: "L", 4: "L", 5: "L", 6: "L", 7: "L", 8: "L", 9: "L"},
+                {},
             "Non_Dealer_Sees_after_Dealer_Opens":
-                {1: "L", 2: "L", 3: "L", 4: "L", 5: "L", 6: "L", 7: "L", 8: "L", 9: "L"},
-        }
-    ) -> None:
+                {},
+            "Non_Dealer_Sees_after_Dealer_Raises_after_Non_Dealer_Opens_after_Dealer_Checks":
+                {},
+        },
+    ) -> None:    
         self._cash_balance = cash_balance
         self._strategy: Strategy = strategy
         self._card: Card = Card(0)
@@ -56,7 +60,7 @@ class Player(ABC):
 
     @property
     @abstractmethod
-    def name(self) -> str:
+    def name(self) -> PlayerList:
         """
         Override this with a function that returns a string which will be used as the player name.
         """

@@ -1,7 +1,13 @@
+from typing import Literal
 import numpy as np
 from scipy.optimize import linprog # type: ignore
 
-def calc_optimal_strategy_combo(results_matrix, player_being_analyzed):
+Player_Type = Literal["dealer", "non-dealer"]
+
+def calc_optimal_strategy_combo( \
+    results_matrix: np.ndarray, \
+    player_being_analyzed: Player_Type \
+) -> tuple[np.ndarray, float]:
     
     """
     args: 

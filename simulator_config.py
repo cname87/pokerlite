@@ -12,7 +12,7 @@ Instructions:
 """
 
 mode = "compare_dealer_vs_non_dealer_strategies"
-mode = "compare_player1_vs_player2_strategies"
+# mode = "compare_player1_vs_player2_strategies"
 
 # Choose the maximum number of cards (length) in the dealer and non-dealer strategies
 max_len_strategies = 2
@@ -44,23 +44,23 @@ You should only define one strategy for each strategy type.
 """
 # The strategy list for player 1 when player 1 as dealer starts the game
 player1_dealer_open_strategy_list = [
-    {9:"H", 8:"M", 7:"L", 6:"L", 5:"L", 4: "L"},
+    {9:"L", 8: "L", 7: "L", 6: "L"},
 ]
 # The strategy list for player 1 as dealer when they have checked instead of opening and player 2 has opened.
 player1_dealer_see_or_raise_after_non_dealer_opens_strategy_list = [
-    {9:"H", 8:"M", 7:"S"},
+    {9:"S", 8: "S", 7: "S", 6: "S"},
 ]
 # The strategy list for player 1 as dealer when player 1 has opened and player 2 has raised
 player1_dealer_see_after_non_dealer_raises_strategy_list = [
-    {9:"S", 8:"S"},
+    {9:"S"},
 ]
 # The strategy list for player 1 as non-dealer when player 2 as dealer checks instead of opening
 player1_non_dealer_open_after_dealer_checks_strategy_list = [
-    {9:"H", 8:"H", 7:"H", 6:"H", 5:"H", 4:"H"},
+    {9:"L"},
 ]
 # The strategy for player 1 as non-dealer when player 2 as dealer opens    
 player1_non_dealer_see_or_raise_after_dealer_opens_strategy_list = [
-    {9:"H", 8:"M", 7:"S"},
+    {9:"S"},
 ]
 # The strategy for player 1 as non-dealer after player 2 raises following player 1's open (after player 2 checks)
 player1_non_dealer_see_after_dealer_raises_strategy_list = [
@@ -68,23 +68,23 @@ player1_non_dealer_see_after_dealer_raises_strategy_list = [
 ]
 # The strategy list for player 2 when player 2 as dealer starts the game
 player2_dealer_open_strategy_list = [
-    {9:"H", 8:"M", 7:"M", 6:"L", 5:"L", 4: "L"},
+    {9: "L", 8: "L", 7: "L", 6: "L", 5: "L", 4: "L", 3: "L", 2: "L", 1: "L"},
 ]
 # The strategy list for player 2 as dealer when they have checked instead of opening and player 1 has opened.
 player2_dealer_see_or_raise_after_non_dealer_opens_strategy_list = [
-    {9:"S"},
+    {9:"S", 8: "S", 7: "S", 6: "S", 5: "S", 4: "S", 3: "S", 2: "S", 1: "S"},
 ]
 # The strategy list for player 2 as dealer when player 2 has opened and player 1 has raised
 player2_dealer_see_after_non_dealer_raises_strategy_list = [
-    {9:"S", 8:"S"},
+    {9:"S"},
 ]
 # The strategy list for player 2 as non-dealer when player 1 as dealer checks instead of opening
 player2_non_dealer_open_after_dealer_checks_strategy_list = [
-    {9:"H", 8:"H", 7:"H", 6:"H", 5:"H", 4:"H"},
+    {9:"L"},
 ]
 # The strategy for player 2 as non-dealer when player 1 as dealer opens    
 player2_non_dealer_see_or_raise_after_dealer_opens_strategy_list = [
-    {9:"S", 8:"S", 7:"S", 6:"S"},
+    {9:"S"},
 ]
 # The strategy for player 2 as non-dealer after player 1 raises following player 2's open (after player 2 checks)
 player2_non_dealer_see_after_dealer_raises_strategy_list = [

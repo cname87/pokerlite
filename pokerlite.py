@@ -7,7 +7,6 @@ Date: 7 May 2024
 Version: 1.0
 """
 
-from __future__ import annotations
 from typing import Any, Optional, TypedDict
 from datetime import datetime
 import random
@@ -288,7 +287,7 @@ class Game:
             "Round_Number": round_number,
             "Pot": pot,
             "Description": "Round Start",
-            "Player": "",
+            "Player": "None",
             "Value": round_number
         })
         

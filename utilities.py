@@ -168,7 +168,9 @@ def generate_possible_lists(length: int = 5, chars: str = 'HML') -> list[dict[in
 
     # Use a set so only unique elements are added
     all_possible_lists_set: set[tuple[str, ...]] = set()
-    for list_length in range(1, length + 1):  # Loop through lengths
+    # Loop through lengths from 1 to the given length
+    # Note: 'From 1' means that a zero length list will not be generated so every strategy will have at least one element - the user can always open or see on the highest card
+    for list_length in range(1, length + 1):
         # Generate all combinations of the possible characters for the current length
         for combination in product(chars, repeat=list_length):
             # Sort the combination and convert to a list

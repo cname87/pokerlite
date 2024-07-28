@@ -1,27 +1,18 @@
-#!/usr/bin/env python
-
 """
 This module holds the configuration for the Pokerlite program.
 Author: Seán Young
 """
 
-from __future__ import annotations
 from datetime import datetime
 import logging
 from typing import Literal, TypedDict
-
-
-class Bet_Options(TypedDict):
-    L: int
-    M: int
-    H: int
 
 #############################################
 # Set the game configuration parameters here
 
 # The file names of all player code files
 ALL_PLAYER_FILES: list[str] = ["player1", "player2", "player3", "player4"]
-# Two to four of the numbers 1, 2, 3, 4 corresponding to the 4 files in ALL_PLAYER_FILES
+# Two of the numbers 1, 2, 3, 4 corresponding to the 4 files in ALL_PLAYER_FILES
 CURRENT_PLAYER_FILE_NUMBERS: list[int] = [1, 4]
 # The name of the class to be defined in each player file 
 PLAYER_CLASS = "PlayerCode"
@@ -33,20 +24,18 @@ CARD_HIGH_NUMBER = 9
 ANTE_BET: int = 10
 # Three allowed values for the opening bet
 OPEN_BET_OPTIONS: dict[str, int] = {
-    "N": 0, # No bet
     "L": ANTE_BET * 1, # Open with the low amount
     "M": ANTE_BET * 2, # Open with the medium amount
     "H": ANTE_BET * 5, # Open with the high amount
 }
-# Factors by which a bet is multiplied to see or raise a bet
+# Factors by which an incoming bet is multiplied to give an amount to add to an incoming bet to see or raise a bet
 SEE_BET_OPTIONS: dict[str, float] = {
-    "N": 0, # No bet
-    "S": 1, # See the bet
-    "M": 1.5, # Medium raise 
-    "H": 2, # High raise
+    "S": 0, # See the bet => leave at 0 (and any other value is ignored anyway)
+    "M": 0.5, # Medium raise 
+    "H": 1.0, # High raise
 }
-# Number of raises allowed
-MAX_RAISES: int = 0
+# Number of raises allowed - simulator supports 1 raise maximum
+MAX_RAISES: int = 1 
 # True to carry the pot when a game is checked, false to give the pot back to the players
 IS_CARRY_POT = True
 
@@ -84,30 +73,46 @@ GAME_CONFIG: GameConfig = {
 # Define various custom types
 TypeForGameState = Literal["Game Start", "Card", "Ante", "Round Start", "Checked", "Win"]
 TypeForBetType = Literal["Ante", "Check", "Open", "See", "Raise", "Fold"]
-TypeForPlayState = Literal["Dealer Opens", "Non-Dealer Opens after Dealer Checks", "Non-Dealer Sees after Dealer Opens", "Dealer Sees after Non-Dealer Opens after Dealer Checks", "Bet after Raise", "End Game"]
+TypeForPlayState = Literal[ \
+    "Dealer Opens", \
+    "Dealer Sees after Non-Dealer Opens after Dealer Checks", \
+    "Dealer Sees after Non-Dealer Raises after Dealer Opens", \
+    "Non-Dealer Opens after Dealer Checks", \
+    "Non-Dealer Sees after Dealer Opens", \
+    "Non-Dealer Sees after Dealer Raises after Non-Dealer Opens after Dealer Checks", \
+    "Bet after Raise", \
+    "End Game", \
+]
 
-# List of card numbers that will trigger actions
-class Strategy(TypedDict):
-    Dealer_Opens_Bets: dict[int, str]
-    Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks: dict[int, str]
-    Non_Dealer_Opens_after_Dealer_Checks: dict[int, str]
-    Non_Dealer_Sees_after_Dealer_Opens: dict[int, str]
+
+# List of card numbers and string values that will trigger actions
+OpenBetValues = Literal["", "L", "M", "H"]
+SeeBetValues = Literal["", "S", "M", "H"]
+Strategy = TypedDict('Strategy', {
+    "Dealer_Opens_Bets": dict[int, OpenBetValues],
+    "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks": dict[int, SeeBetValues],
+    "Dealer_Sees_after_Non_Dealer_Raises_after_Dealer_Opens": dict[int, SeeBetValues],
+    "Non_Dealer_Opens_after_Dealer_Checks": dict[int, OpenBetValues],
+    "Non_Dealer_Sees_after_Dealer_Opens": dict[int, SeeBetValues],
+    "Non_Dealer_Sees_after_Dealer_Raises_after_Non_Dealer_Opens_after_Dealer_Checks": dict[int, SeeBetValues]
+}, total=True)
 
 # Define type for a record of betting activity in a betting round
-class RoundRecord(TypedDict):
-    Round_Number: int
-    Pot: int
-    Bet_Type: TypeForBetType
-    Player: str
-    Bet: int
-
+PlayerList = Literal["None", "player1", "player2", "player3", "player4"]
+RoundRecord = TypedDict("RoundRecord", {
+    "Round_Number": int,
+    "Pot": int,
+    "Bet_Type": TypeForBetType,
+    "Player": PlayerList,
+    "Bet": int,
+}, total=True)
 # Define type for a record of activity in a game
 class GameRecord(TypedDict):
     Game_Id: str
     Round_Number: int
     Pot: int
     Description: TypeForGameState | TypeForBetType
-    Player: str
+    Player: PlayerList
     Value: int
 
 # Initialize the game data list
@@ -116,7 +121,7 @@ game_records: list[GameRecord] = [{
     "Round_Number": 0,
     "Pot": 0,
     "Description": "Game Start",
-    "Player": "",
+    "Player": "None",
     "Value": 0
 }]
 
@@ -133,5 +138,5 @@ if __name__ == "__main__":
     game.play()
     if game.logger.getEffectiveLevel() == logging.DEBUG: 
         print_records(game.game_records)
-    # Download game record file to a file in the same directory
-    # download_game_records(game.game_records, 'game_records.csv')
+    # Download game record file to a file in the downloads directory
+    # download_game_records(game.game_records, 'downloads/game_records.csv')
