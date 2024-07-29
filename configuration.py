@@ -70,9 +70,10 @@ GAME_CONFIG: GameConfig = {
     "IS_CARRY_POT": IS_CARRY_POT
 }
 
-# Define various custom types
+# Game states are used in game records to describe the state of the game
 TypeForGameState = Literal["Game Start", "Card", "Ante", "Round Start", "Checked", "Win"]
 TypeForBetType = Literal["Ante", "Check", "Open", "See", "Raise", "Fold"]
+# Play states are used to tell a player what state a betting round is in so they can use an appropriate betting strategy
 TypeForPlayState = Literal[ \
     "Dealer Opens", \
     "Dealer Sees after Non-Dealer Opens after Dealer Checks", \

@@ -21,7 +21,11 @@ from player import Player
 from utilities import download_game_records, print_records
 
 # Custom type
-TypeForRoundReturn = TypedDict("TypeForRoundReturn", {"Pot": int, "Game Checked": bool, "Remaining Players": list[Player]})
+TypeForRoundReturn = TypedDict("TypeForRoundReturn", {
+    "Pot": int,
+    "Game Checked": bool,
+    "Remaining Players": list[Player]
+})
 
 class Game:
     """
@@ -71,9 +75,23 @@ class Game:
         return self.players[start_idx:] + self.players[:start_idx]
     
     def round_state(self, round_data: list[RoundRecord], player_name: str) -> TypeForPlayState:
-        # Find the player's last play
+        """
+        Determines the state of the round which is passed to a player when requesting the player to bet. The determination is based on the round data stored to date, including the players last play.
+
+        Args:
+            round_data (list[RoundRecord]): The list of round records for the current game.  Includes a field 'Bet_Type' which is the type of bet made by the player in the round, e.g. 'See'.
+            player_name (str): The name of the player from whom a bet will be requested.
+
+        Returns:
+            TypeForPlayState: A string representing the state of the round, e.g., 'Dealer Opens'.
+        """
         
-        def find_last_record_with_value(records: list[RoundRecord], field_to_find: str, value_to_test: str, field_to_return: str) -> Any | None :
+        def find_last_record_with_value(
+            records: list[RoundRecord], 
+            field_to_find: str,
+            value_to_test: str,
+            field_to_return: str
+        ) -> Any | None :
             # Utility function to find the bet type associated with the last player record in the round data record list
             for record in reversed(records):
                 if record.get(field_to_find) == value_to_test:
@@ -87,28 +105,30 @@ class Game:
             value_to_test=player_name,
             field_to_return="Bet_Type"
         )
-        # Test the last record
+        # Test the bet type of the last record (which will be for the other player)
         match[last_record["Bet_Type"]]:
-            # First test if this is an opening bet as the last play was laying an ante
+            # First test if this is an opening bet as the last play was the other player laying an ante
             case["Ante"]:
                 return "Dealer Opens"
-            # Then test if the previous play was a check
+            # Then test if the last play was a first check by the other player
+            # Note: If both players had checked the game would have been ended
             case["Check"]:
-                # NOTE: Assumes a 2 player game 
                 return "Non-Dealer Opens after Dealer Checks"
             # Then test if the previous play was an opening bet
             case["Open"]:
-                # Test the player's last play was laying an ante
+                # Test if the player's last play was laying an ante
                 if last_played == "Ante":
                     # Player has not played this round => responding to an open bet
                     return "Non-Dealer Sees after Dealer Opens"
                 elif last_played == "Check":
-                    # Player previously checked => responding to an opening bet after a check
-                    # NOTE: Assumes a 2 player game  
+                    # Player previously checked as dealer => responding to an opening bet by the non-dealer  
                     return "Dealer Sees after Non-Dealer Opens after Dealer Checks"
                 else:
                     # Player has previously played but not checked (and is not the closing player) => responding to a bet after a player has raised
+                    assert 1 == 2
                     return "Bet after Raise"
+            # "Dealer Sees after Non-Dealer Raises after Dealer Opens"
+            # "Non-Dealer Sees after Dealer Raises after Non-Dealer Opens after Dealer Checks"
             case["Raise"]:
                     # Previous player has raised => responding to a raise bet
                     return "Bet after Raise"
@@ -116,7 +136,7 @@ class Game:
                 # See, Fold should end the game
                 return "End Game"    
     
-    def take_bets(
+    def run_round(
             self,
             pot: int,
             round_number: int,
@@ -143,7 +163,7 @@ class Game:
         for i in range(0, len(player_order)):
             player_order[i].bet_running_total = 0
 
-        # reverses the player order as we later take bets from the end so players can be removed if they fold            
+        # Reverses the player order as we later take bets from the end so players can be removed if they fold            
         player_order.reverse()
 
         # Tracks the number of raises so the number can be limited
@@ -160,7 +180,7 @@ class Game:
         # The bet type for the round record, initialized to 'Ante'
         bet_type: TypeForBetType = "Ante"
 
-        #  Flag if all players checked which ends a betting round
+        # Flag if all players checked which ends a betting round
         # In this case the pot is returned and increments the pot for the next betting round
         isRoundChecked = False
         stop = False
@@ -195,6 +215,7 @@ class Game:
                         # Invalid bet
                         raise ValueError(f"Invalid bet of {n} - a negative amount")
                     case n if n == 0:
+                        # No bet
                         if required_bet == 0:
                             # Opening bet and player checked - no action
                             bet_type = "Check"
@@ -210,8 +231,8 @@ class Game:
                         # Invalid bet - the player must see the current required bet as a minimum
                         raise ValueError(f"Invalid bet of {n} - less than the minimum required")
                     case n if n == required_bet:
-                        bet_type = "See"
                         # Sees - the player bets the required bet
+                        bet_type = "See"
                         self.logger.debug(f"{betting_player.name} has seen the bet by betting {bet}")
                         # Update the player bet running total so future required bets can be determined
                         betting_player.bet_running_total += bet
@@ -219,13 +240,14 @@ class Game:
                         pot += bet
                         self.logger.debug(f"{betting_player.name} balance is: {betting_player.cash_balance} coins")
                     case n if n > required_bet:
+                        # Player either opens or raises
                         if required_bet == 0:
                             # Opening bet and player opened
                             bet_type = "Open"
                             self.logger.debug(f"{betting_player.name} has opened with a bet of {n}")
                         else:
-                            bet_type = "Raise"
                             # Raises - the player sees the required bet but also raises above that amount
+                            bet_type = "Raise"
                             self.logger.debug(f"{betting_player.name} has raised above the required bet of {required_bet} with a bet of {n}")
                             # Increment the count of raises and test if the limit has been reached
                             number_raises += 1
@@ -264,7 +286,7 @@ class Game:
         if self.logger.getEffectiveLevel() == logging.DEBUG:
             print_records(round_data)
         
-        # Return a dictionary with the updated pot, if all players checked in the round and the list of players who have not folded
+        # Return a dictionary with the updated pot, whether all players checked in the round, and the list of players who have not folded
         # Note: It is not strictly necessary to return the player list since Lists are passed by reference
         return {
             "Pot": pot,
@@ -335,7 +357,7 @@ class Game:
 
         # Take the bets 
         self.logger.debug("Taking the bets...")
-        betting_round_return = self.take_bets(
+        betting_round_return = self.run_round(
             pot=pot,
             round_number=round_number,
             player_order=player_order,
