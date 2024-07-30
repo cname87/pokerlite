@@ -35,7 +35,7 @@ class Player(ABC):
         self,
         cash_balance: int = 0,
         strategy: Strategy =  {
-            "Dealer_Opens_Bets":
+            "Dealer_Opens":
                 {},
             "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks": 
                 {},

@@ -10,7 +10,7 @@ logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('simulator')
 import numpy as np
 
-from configuration import CARD_HIGH_NUMBER, BOLD, SEE_BET_OPTIONS, UNDERLINE, RESET, ANTE_BET, OPEN_BET_OPTIONS, IS_CARRY_POT
+from configuration import CARD_HIGH_NUMBER, BOLD, SEE_BET_OPTIONS, UNDERLINE, RESET, ANTE_BET, OPEN_BET_OPTIONS, IS_CARRY_POT, OpenBetValues, SeeBetValues
 from simulator_config import \
     mode, \
     player1_dealer_open_strategy_list, \
@@ -29,12 +29,12 @@ from utilities import download_matrix
 
 # Runs the betting round loop for every possible card combination between dealer and non-dealer, all equally likely, and sums winnings over all
 def inner_betting_round_loop(
-    dealer_open_strategy: dict[int, str],
-    dealer_see_strategy: dict[int, str],
-    dealer_raise_strategy: dict[int, str],
-    non_dealer_open_strategy: dict[int, str],
-    non_dealer_see_strategy: dict[int, str],
-    non_dealer_raise_strategy: dict[int, str],
+    dealer_open_strategy: dict[int, OpenBetValues],
+    dealer_see_strategy: dict[int, SeeBetValues],
+    dealer_raise_strategy: dict[int, SeeBetValues],
+    non_dealer_open_strategy: dict[int, OpenBetValues],
+    non_dealer_see_strategy: dict[int, SeeBetValues],
+    non_dealer_raise_strategy: dict[int, SeeBetValues],
 ) -> dict[str, int | float]:
     
     """
@@ -265,12 +265,12 @@ def inner_betting_round_loop(
 
 def outer_strategies_to_be_tested_loop(
     set_up: dict[str, str],
-    outermost1_strategy_list: list[dict[int, str]] = [],
-    outermost2_strategy_list: list[dict[int, str]] = [],
-    outermost3_strategy_list: list[dict[int, str]] = [],
-    innermost1_strategy_list: list[dict[int, str]] = [],
-    innermost2_strategy_list: list[dict[int, str]] = [],
-    innermost3_strategy_list: list[dict[int, str]] = [],
+    outermost1_strategy_list: list[dict[int, OpenBetValues]] = [],
+    outermost2_strategy_list: list[dict[int, SeeBetValues]] = [],
+    outermost3_strategy_list: list[dict[int, SeeBetValues]] = [],
+    innermost1_strategy_list: list[dict[int, OpenBetValues]] = [],
+    innermost2_strategy_list: list[dict[int, SeeBetValues]] = [],
+    innermost3_strategy_list: list[dict[int, SeeBetValues]] = [],
     tot_player1_wins: int = 0,
     tot_player2_wins: int = 0,
     tot_player1_win_or_loss: float = 0,
@@ -445,9 +445,11 @@ def outer_strategies_to_be_tested_loop(
     if mode == "compare_player1_vs_player2_strategies":
         print(f"{BOLD}{UNDERLINE}Testing player vs player: In this round {set_up["inner_player"]} is {set_up["inner_loop"]} against {set_up["outer_player"]} as {set_up["outer_loop"]}{RESET}")
         print(f"{set_up["inner_player"]} as {set_up["inner_loop"]} open strategy: {innermost1_strategy}")
-        print(f"{set_up["inner_player"]} as {set_up["inner_loop"]} see strategy: {innermost2_strategy}")
+        print(f"{set_up["inner_player"]} as {set_up["inner_loop"]} see or raise strategy: {innermost2_strategy}")
+        print(f"{set_up["inner_player"]} as {set_up["inner_loop"]} see the raise strategy: {innermost3_strategy}")
         print(f"{set_up["outer_player"]} as {set_up["outer_loop"]} open strategy: {outermost1_strategy}")
-        print(f"{set_up["outer_player"]} as {set_up["outer_loop"]} see strategy: {outermost2_strategy}")
+        print(f"{set_up["outer_player"]} as {set_up["outer_loop"]} see or raise strategy: {outermost2_strategy}")
+        print(f"{set_up["outer_player"]} as {set_up["outer_loop"]} see the raise strategy: {outermost3_strategy}")
         print(f"Total player1 wins: {one_run_player1_wins}")
         print(f"Total player2 wins: {one_run_player2_wins}")
         print(f"Total pot carries: {one_run_pot_carries}")
@@ -493,7 +495,7 @@ def run_simulation() -> None:
     """
  
     #  Allow the strategies be referenced
-    dict_strategies: dict[str, list[dict[int, str]]] = {
+    dict_strategies: dict[str, list[dict[int, OpenBetValues]] | list[dict[int, SeeBetValues]]] = {
         "player1_dealer_open_strategy_list": player1_dealer_open_strategy_list,
         "player1_dealer_see_or_raise_after_non_dealer_opens_strategy_list":       player1_dealer_see_or_raise_after_non_dealer_opens_strategy_list,
         "player1_dealer_see_after_non_dealer_raises_strategy_list": player1_dealer_see_after_non_dealer_raises_strategy_list,
@@ -546,12 +548,12 @@ def run_simulation() -> None:
                 "inner_player": "player1",
                 "outer_player": "player2",
             },
-            outermost1_strategy_list=cast(list[dict[int, str]], dict_strategies["player2_dealer_open_strategy_list"]), # Dealer open strategy
-            outermost2_strategy_list=cast(list[dict[int, str]], dict_strategies["player2_dealer_see_or_raise_after_non_dealer_opens_strategy_list"]), # Dealer see strategy
-            outermost3_strategy_list=cast(list[dict[int, str]], dict_strategies["player2_dealer_see_after_non_dealer_raises_strategy_list"]), # Dealer raise strategy
-            innermost1_strategy_list=cast(list[dict[int, str]], dict_strategies[ "player1_non_dealer_open_after_dealer_checks_strategy_list"]), # Non-dealer open strategy",
-            innermost2_strategy_list=cast(list[dict[int, str]], dict_strategies["player1_non_dealer_see_or_raise_after_dealer_opens_strategy_list"]), # Non-dealer see strategy",
-            innermost3_strategy_list=cast(list[dict[int, str]], dict_strategies["player1_non_dealer_see_after_dealer_raises_strategy_list"]), # Non-dealer raise strategy",
+            outermost1_strategy_list=cast(list[dict[int, OpenBetValues]], dict_strategies["player2_dealer_open_strategy_list"]), # Dealer open strategy
+            outermost2_strategy_list=cast(list[dict[int, SeeBetValues]], dict_strategies["player2_dealer_see_or_raise_after_non_dealer_opens_strategy_list"]), # Dealer see strategy
+            outermost3_strategy_list=cast(list[dict[int, SeeBetValues]], dict_strategies["player2_dealer_see_after_non_dealer_raises_strategy_list"]), # Dealer raise strategy
+            innermost1_strategy_list=cast(list[dict[int, OpenBetValues]], dict_strategies[ "player1_non_dealer_open_after_dealer_checks_strategy_list"]), # Non-dealer open strategy",
+            innermost2_strategy_list=cast(list[dict[int, SeeBetValues]], dict_strategies["player1_non_dealer_see_or_raise_after_dealer_opens_strategy_list"]), # Non-dealer see strategy",
+            innermost3_strategy_list=cast(list[dict[int, SeeBetValues]], dict_strategies["player1_non_dealer_see_after_dealer_raises_strategy_list"]), # Non-dealer raise strategy",
         )
         tot_player1_wins += cast(int, results["tot_player1_wins"])
         tot_player2_wins += cast(int, results["tot_player2_wins"])

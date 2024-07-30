@@ -6,29 +6,30 @@ Author: Seán Young
 import logging
 from typing import cast
 
-from configuration import Strategy, OpenBetValues, SeeBetValues, TypeForPlayState, OPEN_BET_OPTIONS, SEE_BET_OPTIONS
+from configuration import PlayerList, Strategy, OpenBetValues, SeeBetValues, TypeForPlayState, OPEN_BET_OPTIONS, SEE_BET_OPTIONS
 from player import Player, RoundRecord
 from utilities import validate_bet, print_records
 
 class PlayerCode(Player):
     
     @property
-    def name(self) -> str:
+    def name(self) -> PlayerList:
         return "player4"
 
     def __init__(
         self, 
         cash_balance: int = 0,
         strategy: Strategy =  {
-            "Dealer_Opens_Bets":
+            "Dealer_Opens":
                 {9:"L", 8:"L", 7:"L", 6:"L"},
             "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks": 
-                {9: "S", 8: "S", 7: "S", 6: "S"},
+                {9: "H", 8: "H", 7: "H", 6: "H", 5: "H", 4: "H", 3: "H", 2: "H"},
             "Dealer_Sees_after_Non_Dealer_Raises_after_Dealer_Opens":
                 {9: "S"},
             "Non_Dealer_Opens_after_Dealer_Checks":
-                {9: "L"},
-            "Non_Dealer_Sees_after_Dealer_Opens": {9: "S"},
+                {9: "H", 8: "H"},
+            "Non_Dealer_Sees_after_Dealer_Opens":
+                {9: "H", 8: "M", 7: "M", 6: "M", 5: "M", 4: "M", 3: "M", 2: "M"},
             "Non_Dealer_Sees_after_Dealer_Raises_after_Non_Dealer_Opens_after_Dealer_Checks":
                 {9: "S"},
         }):
@@ -61,7 +62,7 @@ class PlayerCode(Player):
 
             match(betting_state):
                 case("Dealer Opens"):
-                    player_open_strategy = self.strategy["Dealer_Opens_Bets"]
+                    player_open_strategy = self.strategy["Dealer_Opens"]
                     self.logger.debug(f"The playing strategy is: {player_open_strategy}")
                     if self.card.value in player_open_strategy:
                         bet = Player.get_CONFIG()["OPEN_BET_OPTIONS"][player_open_strategy[self.card.value]] # Bet
@@ -78,8 +79,8 @@ class PlayerCode(Player):
                             bet = required_bet # See
                             self.logger.debug(f"{self.name} sees with bet: {bet}")
                         else:
-                            raise_amount = round(bet * SEE_BET_OPTIONS[bet_type])
-                            bet += raise_amount # Raise
+                            raise_amount = round(required_bet * SEE_BET_OPTIONS[bet_type])
+                            bet = required_bet + raise_amount # Raise
                             self.logger.debug(f"{self.name} raises with bet: {bet}")       
                     else:
                         bet = 0 # Fold
@@ -111,8 +112,8 @@ class PlayerCode(Player):
                             bet = required_bet # See
                             self.logger.debug(f"{self.name} sees with bet: {bet}")
                         else:
-                            raise_amount = round(bet * SEE_BET_OPTIONS[bet_type])
-                            bet += raise_amount # Raise
+                            raise_amount = round(required_bet * SEE_BET_OPTIONS[bet_type])
+                            bet = required_bet + raise_amount # Raise
                             self.logger.debug(f"{self.name} raises with bet: {bet}")       
                     else:
                         bet = 0 # Fold
@@ -129,6 +130,6 @@ class PlayerCode(Player):
                 case _:
                     pass
 
-            validate_bet(required_bet, bet, Player.get_CONFIG(), is_raise_allowed)
+            # validate_bet(required_bet, bet, Player.get_CONFIG(), is_raise_allowed)
 
             return bet

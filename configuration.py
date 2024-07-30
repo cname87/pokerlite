@@ -17,7 +17,7 @@ CURRENT_PLAYER_FILE_NUMBERS: list[int] = [1, 4]
 # The name of the class to be defined in each player file 
 PLAYER_CLASS = "PlayerCode"
 # The game consists of this many betting rounds
-NUMBER_ROUNDS: int = 1_000_000
+NUMBER_ROUNDS: int = 10
 # Each player gets a card with a number between 1 and this value
 CARD_HIGH_NUMBER = 9
 # Ante amount paid into the pot at the start of each betting round by each player
@@ -72,7 +72,7 @@ GAME_CONFIG: GameConfig = {
 
 # Game states are used in game records to describe the state of the game
 TypeForGameState = Literal["Game Start", "Card", "Ante", "Round Start", "Checked", "Win"]
-TypeForBetType = Literal["Ante", "Check", "Open", "See", "Raise", "Fold"]
+
 # Play states are used to tell a player what state a betting round is in so they can use an appropriate betting strategy
 TypeForPlayState = Literal[ \
     "Dealer Opens", \
@@ -81,16 +81,14 @@ TypeForPlayState = Literal[ \
     "Non-Dealer Opens after Dealer Checks", \
     "Non-Dealer Sees after Dealer Opens", \
     "Non-Dealer Sees after Dealer Raises after Non-Dealer Opens after Dealer Checks", \
-    "Bet after Raise", \
     "End Game", \
 ]
-
 
 # List of card numbers and string values that will trigger actions
 OpenBetValues = Literal["", "L", "M", "H"]
 SeeBetValues = Literal["", "S", "M", "H"]
 Strategy = TypedDict('Strategy', {
-    "Dealer_Opens_Bets": dict[int, OpenBetValues],
+    "Dealer_Opens": dict[int, OpenBetValues],
     "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks": dict[int, SeeBetValues],
     "Dealer_Sees_after_Non_Dealer_Raises_after_Dealer_Opens": dict[int, SeeBetValues],
     "Non_Dealer_Opens_after_Dealer_Checks": dict[int, OpenBetValues],
@@ -103,7 +101,7 @@ PlayerList = Literal["None", "player1", "player2", "player3", "player4"]
 RoundRecord = TypedDict("RoundRecord", {
     "Round_Number": int,
     "Pot": int,
-    "Bet_Type": TypeForBetType,
+    "Bet_Type": str,
     "Player": PlayerList,
     "Bet": int,
 }, total=True)
@@ -112,7 +110,7 @@ class GameRecord(TypedDict):
     Game_Id: str
     Round_Number: int
     Pot: int
-    Description: TypeForGameState | TypeForBetType
+    Description: TypeForGameState | str
     Player: PlayerList
     Value: int
 
