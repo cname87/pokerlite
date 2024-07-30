@@ -51,17 +51,17 @@ def inner_betting_round_loop(
             - num_deals (int): The total number of deals simulated.
             - num_dealer_wins (int): The number of times the dealer wins.
             - num_non_dealer_wins (int): The number of times the non-dealer wins.
-            - dealer_cash_with_carries (float): The total amount of money the dealer wins or loses, taking into account pot carries.
-            - non_dealer_cash_with_carries (float): The total amount of money the non-dealer wins or loses, taking into account pot carries.
+            - dealer_cash_adding_carry_calculation (float): The total amount of money the dealer wins or loses, taking into account pot carries.
+            - non_dealer_cash_adding_carry_calculation (float): The total amount of money the non-dealer wins or loses, taking into account pot carries.
             - num_pot_carries (int): The number of times the pot carries.
             - num_pot_returns (int): The number of times the pot is returned to the players.
     """
 
     # Reset betting round parameters
-    dealer_cash_without_carries: float = 0
-    non_dealer_cash_without_carries: float = 0
-    dealer_cash_with_carries: float = 0
-    non_dealer_cash_with_carries: float = 0
+    dealer_cash: float = 0
+    non_dealer_cash: float = 0
+    dealer_cash_adding_carry_calculation: float = 0
+    non_dealer_cash_adding_carry_calculation: float = 0
     num_deals:int = 0
     num_dealer_wins: int = 0
     num_non_dealer_wins: int = 0
@@ -75,8 +75,8 @@ def inner_betting_round_loop(
             bet: int = 0            
             pot: int = 0
             num_deals += 1
-            dealer_cash_without_carries -= ANTE_BET
-            non_dealer_cash_without_carries -= ANTE_BET
+            dealer_cash -= ANTE_BET
+            non_dealer_cash -= ANTE_BET
             pot += (2 * ANTE_BET)
             # Dealer decides to open or check
             if dealer_card in dealer_open_strategy:
@@ -84,7 +84,7 @@ def inner_betting_round_loop(
                 logger.debug(f"Dealer opens with card: {dealer_card}")
                 # Set the opening bet based on player strategy
                 bet = OPEN_BET_OPTIONS[dealer_open_strategy[dealer_card]]
-                dealer_cash_without_carries -= bet
+                dealer_cash -= bet
                 pot += bet
                 # Non-Dealer decides to see, raise or fold
                 if non_dealer_card in non_dealer_see_strategy:
@@ -93,19 +93,19 @@ def inner_betting_round_loop(
                         # Non-Dealer sees
                         # Note that on see the bet is set by the opening bet so is not read from the non-dealer strategy
                         logger.debug(f"Non-Dealer sees on open with card: {non_dealer_card}")
-                        non_dealer_cash_without_carries -= bet
+                        non_dealer_cash -= bet
                         pot += bet
                         if dealer_card > non_dealer_card:
                             # Dealer wins
                             logger.debug(f"Dealer wins with card: {dealer_card}")
                             num_dealer_wins += 1
-                            dealer_cash_without_carries += pot
+                            dealer_cash += pot
                             pot = 0
                         else:
                             # Non-Dealer wins
                             logger.debug(f"Non-Dealer wins with card: {non_dealer_card}")
                             num_non_dealer_wins+= 1
-                            non_dealer_cash_without_carries += pot
+                            non_dealer_cash += pot
                             pot = 0
                     else:
                         # Non-Dealer raises
@@ -113,37 +113,37 @@ def inner_betting_round_loop(
                         logger.debug(f"Non-Dealer raises on open with card: {non_dealer_card}")
                         raise_amount = round(bet * SEE_BET_OPTIONS[non_dealer_see_strategy[non_dealer_card]])                        
                         bet += raise_amount
-                        non_dealer_cash_without_carries -= bet
+                        non_dealer_cash -= bet
                         pot += bet
                         # Dealer decides to see or fold
                         if dealer_card in dealer_raise_strategy:
                             # Dealer sees
                             logger.debug(f"Dealer sees on raise with card: {dealer_card}")
-                            dealer_cash_without_carries -= raise_amount
+                            dealer_cash -= raise_amount
                             pot += raise_amount
                             if dealer_card > non_dealer_card:
                                 # Dealer wins
                                 logger.debug(f"Dealer wins with card: {dealer_card}")
                                 num_dealer_wins += 1
-                                dealer_cash_without_carries += pot
+                                dealer_cash += pot
                                 pot = 0
                             else:
                                 # Non-Dealer wins
                                 logger.debug(f"Non-Dealer wins with card: {non_dealer_card}")
                                 num_non_dealer_wins+= 1
-                                non_dealer_cash_without_carries += pot
+                                non_dealer_cash += pot
                                 pot = 0
                         else:
                             # Dealer folds => Non-Dealer wins
                             logger.debug(f"Dealer folds on raise with card: {dealer_card}")
                             num_non_dealer_wins += 1
-                            non_dealer_cash_without_carries += pot
+                            non_dealer_cash += pot
                             pot = 0                    
                 else:
                     # Non-Dealer folds => Dealer wins
                     logger.debug(f"Non-Dealer folds on open with card: {non_dealer_card}")
                     num_dealer_wins += 1
-                    dealer_cash_without_carries += pot
+                    dealer_cash += pot
                     pot = 0
             else:
                 # Dealer checks and Non-Dealer decides to open or check
@@ -153,7 +153,7 @@ def inner_betting_round_loop(
                     logger.debug(f"Non-Dealer opens on check with card: {non_dealer_card}")
                     # Set the opening bet based on player strategy
                     bet = OPEN_BET_OPTIONS[non_dealer_open_strategy[non_dealer_card]]
-                    non_dealer_cash_without_carries -= bet
+                    non_dealer_cash -= bet
                     pot += bet
                     # Dealer decides to see, raise or fold
                     if dealer_card in dealer_see_strategy:
@@ -162,19 +162,19 @@ def inner_betting_round_loop(
                             # Dealer sees
                             # Note that on see the bet is set by dealer so is not read from the non-dealer strategy
                             logger.debug(f"Dealer sees on open with card: {dealer_card}")
-                            dealer_cash_without_carries -= bet
+                            dealer_cash -= bet
                             pot += bet
                             if dealer_card > non_dealer_card:
                                 # Dealer wins
                                 logger.debug(f"Dealer wins with card: {dealer_card}")
                                 num_dealer_wins += 1
-                                dealer_cash_without_carries += pot
+                                dealer_cash += pot
                                 pot = 0
                             else:
                                 # Non-Dealer wins
                                 logger.debug(f"Non-Dealer wins with card: {non_dealer_card}")
                                 num_non_dealer_wins+= 1
-                                non_dealer_cash_without_carries += pot
+                                non_dealer_cash += pot
                                 pot = 0
                         else:
                             # Dealer raises
@@ -182,44 +182,44 @@ def inner_betting_round_loop(
                             logger.debug(f"Dealer raises on open with card: {dealer_card}")
                             raise_amount = round(bet * SEE_BET_OPTIONS[dealer_see_strategy[dealer_card]])                        
                             bet += raise_amount
-                            dealer_cash_with_carries -= bet
+                            dealer_cash -= bet
                             pot += bet
                             # Non-Dealer decides to see or fold
                             if non_dealer_card in non_dealer_raise_strategy:
                                 # Non-Dealer sees
                                 logger.debug(f"Non-Dealer sees on raise with card: {non_dealer_card}")
-                                non_dealer_cash_without_carries -= raise_amount
+                                non_dealer_cash -= raise_amount
                                 pot += raise_amount
                                 if dealer_card > non_dealer_card:
                                     # Dealer wins
                                     logger.debug(f"Dealer wins with card: {dealer_card}")
                                     num_dealer_wins += 1
-                                    dealer_cash_without_carries += pot
+                                    dealer_cash += pot
                                     pot = 0
                                 else:
                                     # Non-Dealer wins
                                     logger.debug(f"Non-Dealer wins with card: {non_dealer_card}")
                                     num_non_dealer_wins+= 1
-                                    non_dealer_cash_without_carries += pot
+                                    non_dealer_cash += pot
                                     pot = 0
                             else:
                                 # Non-Dealer folds => Dealer wins
                                 logger.debug(f"Non-Dealer folds on raise with card: {non_dealer_card}")
                                 num_dealer_wins += 1
-                                dealer_cash_without_carries += pot
+                                dealer_cash += pot
                                 pot = 0   
                     else:
                         # Dealer folds => Non-Dealer wins
                         logger.debug(f"Dealer folds on open with card: {dealer_card}")
                         num_non_dealer_wins+= 1
-                        non_dealer_cash_without_carries += pot
+                        non_dealer_cash += pot
                         pot = 0
                 else:
                     # Non-Dealer also checks => no winner
                     logger.debug(f"Non-Dealer also checks with card: {non_dealer_card}")
                     # Reset the pot and ante for the next round
-                    dealer_cash_without_carries += ANTE_BET
-                    non_dealer_cash_without_carries += ANTE_BET
+                    dealer_cash += ANTE_BET
+                    non_dealer_cash += ANTE_BET
                     pot = 0
                     if IS_CARRY_POT: 
                         # Pot carries forward
@@ -230,24 +230,24 @@ def inner_betting_round_loop(
                         num_pot_returns += 1     
             # Print round data
             if logger.getEffectiveLevel() == logging.DEBUG:
-                print(f"Dealer cash without carries: {dealer_cash_without_carries}")
-                print(f"Non-dealer cash without carries: {non_dealer_cash_without_carries}")
+                print(f"Dealer cash without carries: {dealer_cash}")
+                print(f"Non-dealer cash without carries: {non_dealer_cash}")
     
     # Betting round loop test
     assert num_deals == num_dealer_wins + num_non_dealer_wins + num_pot_carries + num_pot_returns, "Deal count error"
 
     # Divide carried pot between players
     pot_carried = num_pot_carries * (2 * ANTE_BET)
-    dealer_cash_with_carries = dealer_cash_without_carries - (num_pot_carries * ANTE_BET) + (pot_carried * num_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
-    non_dealer_cash_with_carries = non_dealer_cash_without_carries - (num_pot_carries * ANTE_BET) + (pot_carried * num_non_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
+    dealer_cash_adding_carry_calculation = dealer_cash - (num_pot_carries * ANTE_BET) + (pot_carried * num_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
+    non_dealer_cash_adding_carry_calculation = non_dealer_cash - (num_pot_carries * ANTE_BET) + (pot_carried * num_non_dealer_wins / (num_dealer_wins + num_non_dealer_wins))
 
     logger.debug("\n")
     logger.debug(f"Betting round loop summary: Dealer open strategy: {dealer_open_strategy}")
     logger.debug(f"Betting round loop summary: Dealer see-after-check strategy: {dealer_see_strategy}")
     logger.debug(f"Betting round loop summary: Non-dealer open-after-check strategy: {non_dealer_open_strategy}")
     logger.debug(f"Betting round loop summary: Non-dealer see-after-open strategy: {non_dealer_see_strategy}")
-    logger.debug(f"Betting round loop summary: Dealer win/loss per round: {round(dealer_cash_with_carries / num_deals, 4)}")
-    logger.debug(f"Betting round loop summary: Non-dealer win/loss per round: {round(non_dealer_cash_with_carries / num_deals, 4)}")
+    logger.debug(f"Betting round loop summary: Dealer win/loss per round: {round(dealer_cash_adding_carry_calculation / num_deals, 4)}")
+    logger.debug(f"Betting round loop summary: Non-dealer win/loss per round: {round(non_dealer_cash_adding_carry_calculation / num_deals, 4)}")
     logger.debug(f"Betting round loop summary: Dealer wins: {num_dealer_wins}")
     logger.debug(f"Betting round loop summary: Non-dealer wins: {num_non_dealer_wins}")
     logger.debug(f"Betting round loop summary: Pots carried: {num_pot_carries}")
@@ -257,8 +257,8 @@ def inner_betting_round_loop(
         "num_deals": num_deals,
         "num_dealer_wins": num_dealer_wins,
         "num_non_dealer_wins": num_non_dealer_wins,
-        "dealer_cash_with_carries": dealer_cash_with_carries,
-        "non_dealer_cash_with_carries": non_dealer_cash_with_carries,
+        "dealer_cash_with_carries": dealer_cash_adding_carry_calculation,
+        "non_dealer_cash_with_carries": non_dealer_cash_adding_carry_calculation,
         "num_pot_carries": num_pot_carries,
         "num_pot_returns": num_pot_returns,
     }
