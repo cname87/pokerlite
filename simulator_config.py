@@ -21,10 +21,14 @@ mode = "compare_dealer_vs_non_dealer_strategies"
 # mode = "compare_player1_vs_player2_strategies"
 
 # Choose the maximum number of cards (length) in the dealer and non-dealer strategies
-max_len_strategies = 2
-   
+max_len_strategies = 5
 # File path tp save the results of the simulation   
 FILE_PATH = "C:/Users/syoung/Downloads/simulator-results.csv"
+# True to print debug statements in the inner loop
+INNER_DEBUG = False
+# True to print time tracking statements
+TIME_DEBUG = True
+
 """
 Strategies for dealer vs non-dealer strategies are defined here in lists
 """ 
