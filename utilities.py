@@ -5,12 +5,13 @@ Utilities.
 Author: Seán Young
 """
 
+import ast
 import logging
 import logging.config
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('utility')
 
-from typing import Any
+from typing import Any, Iterable, cast
 from collections import defaultdict
 import csv
 from itertools import islice, product
@@ -184,3 +185,122 @@ def generate_possible_lists(length: int = 5, chars: str = 'HML') -> list[dict[in
     # Convert each list to a dictionary
     all_possible_lists_dicts = [tuple_to_dict(combination) for combination in all_possible_lists]
     return all_possible_lists_dicts
+
+def get_intersection_value(
+    file_path: str,
+    combo1: tuple[dict[int, str], dict[int, str], dict[int, str]],
+    combo2: tuple[dict[int, str], dict[int, str], dict[int, str]],
+) -> str:
+
+    """
+    - A path to file is supplied, which contains a csv file consisting of a list of x row lists each having x elements.
+    - The first three row lists contain values such that each combination of the three values at the same place in the three lists is unique.  Each value is a player strategy in the form of a dictionary, e.g. {9: 'H'}.
+    - The first three elements in every row list, apart from the first three, contain values such that each combination of the three values is unique.  Each value is a player strategy in the form of a dictionary, e.g. {9: 'H'}.
+    - All the other elements in the lists contain string values, equivalent to float numbers.
+    - The function that takes 2 values, combo1 corresponding to a combination of values from a place in the first three row lists and combo2 corresponding to a a combination of values from the first three elements on the remaining row lists, and returns the value at their intersection.
+    
+    
+
+    Args:
+        file_path (str): The path to the CSV file
+        combo1 (tuple[dict[int, str], dict[int, str], dict[int, str]]):  See description above
+        combo2 (tuple[dict[int, str], dict[int, str], dict[int, str]]):  See description above
+
+    Returns:
+        str: See description above
+    """
+    
+    # Open the CSV file
+    with open(file_path, mode='r', newline='') as file:
+            matrix = list(csv.reader(file))
+    
+    # Find the column index for combo1 in the first three row lists
+    col_index = -1
+    for col in range(len(matrix[0])):
+        try:
+            # The matrix is read in from a csv so matrix[x][y] returns ("{9; 'H'}", "{9; 'H'}", "{9; 'S'}"), for example'
+            # To convert this to a tuple of dictionaries, e.g. ({9; 'H'}, {9; 'H'}, {9; 'S'}), we use ast.literal_eval
+            col_data = tuple(ast.literal_eval(matrix[i][col]) for i in range(3))
+        except Exception as e:
+            # Ignore any errors on any values in the first few columns that are not valid dict values e.g. ""
+            continue
+        if col_data == combo1:
+            col_index = col
+            break
+    if col_index == -1:
+        raise ValueError("Combination 1 not found in the first three row lists")
+    
+    # Find the row index for combo2 in the first three elements of the remaining row lists
+    row_index = -1
+    for row in range(3, len(matrix)):
+        try:
+            # The matrix is read in from a csv so matrix[x][y] returns ("{9; 'H'}", "{9; 'H'}", "{9; 'S'}"), for example'
+            # To convert this to a tuple of dictionaries, e.g. ({9; 'H'}, {9; 'H'}, {9; 'S'}), we use ast.literal_eval
+            row_data = tuple(ast.literal_eval(matrix[row][i]) for i in range(3))
+        except Exception as e:
+            # Ignore any errors on any values in the first few rows that are not valid dict values e.g. ""
+            continue
+        if row_data == combo2:
+            row_index = row
+            break
+    if row_index == -1:
+        raise ValueError("Combination 2 not found in the first three elements of the remaining row lists")
+    
+    # Return the value at the intersection
+    return matrix[row_index][col_index]
+
+def is_float_and_greater_than_zero(value: Any) -> bool:
+    """
+    Check if a value can be converted to a float and is greater than zero.
+    
+    Args:
+        value (Any): The value to check.
+
+    Returns:
+        bool: True if the value can be converted to a float and is greater than zero, False otherwise.
+    """
+    try:
+        return float(value) > 0
+    except ValueError:
+        return False
+
+def get_key_data(file_path: str) -> dict[str, tuple[dict[int, str],... ]]:
+    """
+    Function to return a tuple with the index of any value greater than zero in the 4th row and column of a csv file and return the values at their intersection.
+    
+    Args:
+        file_path (str): The path to the CSV file.
+
+    Returns:
+        tuple: Indices of values greater than zero in the 4th row.
+    """
+    # Open the CSV file
+    with open(file_path, mode='r', newline='') as file:
+            matrix = list(csv.reader(file))
+
+    # Find the indices of the values greater than zero in the 4th row
+    col_indices = tuple(
+            index for index, value in enumerate(matrix[3])
+            if is_float_and_greater_than_zero(value)
+        )
+    col_headers = tuple(ast.literal_eval(matrix[i][col_indices[0]]) for i in range(3))
+    
+    # Find the indices of the values greater than zero in the 4th column
+    row_indices = tuple(
+            index for index, row in enumerate(matrix)
+            if is_float_and_greater_than_zero(row[3])
+        )
+    row_headers = tuple(ast.literal_eval(matrix[i][row_indices[0]]) for i in range(3))
+    
+    # Find the value at the intersection of the row and column indices
+    intersection = matrix[row_indices[0]][col_indices[0]]
+    
+    # Print the results
+    print(f"Dealer best strategy: {col_headers}")
+    print(f"Non-Dealer best strategy: {row_headers}")
+    print(f"Value at intersection: {intersection}")
+    
+    return {
+        "Dealer best strategy": col_headers,
+        "Non-dealer best strategy": row_headers,
+    }

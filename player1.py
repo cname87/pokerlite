@@ -5,15 +5,34 @@ Author: Seán Young
 
 import logging
 
-from configuration import PlayerList, Strategy, OpenBetValues, SeeBetValues, TypeForPlayState, OPEN_BET_OPTIONS, SEE_BET_OPTIONS
+from configuration import PlayerList, Strategy, OpenBetValues, SeeBetValues, TypeForPlayState
+# from simulator_config import FILE_PATH
+
 from player import Player, RoundRecord
-from utilities import validate_bet, print_records
+from utilities import validate_bet, get_key_data, print_records
+
+# strategies = get_percentages_and_values(FILE_PATH)
 
 class PlayerCode(Player):
     
     @property
     def name(self) -> PlayerList:
         return "player1"
+
+        """
+        "Dealer_Opens":
+            strategies["Dealer best strategies"][0],
+        "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks": 
+            strategies["Dealer best strategies"][1],
+        "Dealer_Sees_after_Non_Dealer_Raises_after_Dealer_Opens":
+            strategies["Dealer best strategies"][2],
+        "Non_Dealer_Opens_after_Dealer_Checks":
+            strategies["Non-dealer best strategies"][0],
+        "Non_Dealer_Sees_after_Dealer_Opens":
+            strategies["Non-dealer best strategies"][1],
+        "Non_Dealer_Sees_after_Dealer_Raises_after_Non_Dealer_Opens_after_Dealer_Checks":
+            strategies["Non-dealer best strategies"][2],
+        """
 
     def __init__(
         self, 
@@ -22,13 +41,13 @@ class PlayerCode(Player):
             "Dealer_Opens":
                 {9:"L", 8:"L", 7:"L", 6:"L"},
             "Dealer_Sees_after_Non_Dealer_Opens_after_Dealer_Checks": 
-                {9: "H", 8: "M", 7: "M", 6: "M", 5: "M", 4: "M", 3: "M", 2: "M"},
+                {9: "H", 8: "H", 7: "H", 6: "H", 5: "H", 4: "H", 3: "H", 2: "H"},
             "Dealer_Sees_after_Non_Dealer_Raises_after_Dealer_Opens":
-                {9: "S", 8: "S", 7: "S", 6: "S", 5: "S"},
+                {9: "S"},
             "Non_Dealer_Opens_after_Dealer_Checks":
                 {9: "H", 8: "H"},
             "Non_Dealer_Sees_after_Dealer_Opens":
-                {9: "M", 8: "M", 7: "M", 6: "M", 5: "M", 4: "M", 3: "M", 2: "M"},
+                {9: "H", 8: "M", 7: "M", 6: "M", 5: "M", 4: "M", 3: "M", 2: "M"},
             "Non_Dealer_Sees_after_Dealer_Raises_after_Non_Dealer_Opens_after_Dealer_Checks":
                 {9: "S"},
         }):
@@ -78,7 +97,7 @@ class PlayerCode(Player):
                             bet = required_bet # See
                             self.logger.debug(f"{self.name} sees with bet: {bet}")
                         else:
-                            raise_amount = round(required_bet * SEE_BET_OPTIONS[bet_type])
+                            raise_amount = round(required_bet * Player.get_CONFIG()["SEE_BET_OPTIONS"][bet_type])
                             bet = required_bet + raise_amount # Raise
                             self.logger.debug(f"{self.name} raises with bet: {bet}")       
                     else:
@@ -111,7 +130,7 @@ class PlayerCode(Player):
                             bet = required_bet # See
                             self.logger.debug(f"{self.name} sees with bet: {bet}")
                         else:
-                            raise_amount = round(required_bet * SEE_BET_OPTIONS[bet_type])
+                            raise_amount = round(required_bet * Player.get_CONFIG()["SEE_BET_OPTIONS"][bet_type])
                             bet = required_bet + raise_amount # Raise
                             self.logger.debug(f"{self.name} raises with bet: {bet}")       
                     else:

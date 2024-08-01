@@ -17,12 +17,14 @@ Instructions:
 - Write the player1 and player2 strategies for mode two. 
 """
 
-# mode = "compare_dealer_vs_non_dealer_strategies"
-mode = "compare_player1_vs_player2_strategies"
+mode = "compare_dealer_vs_non_dealer_strategies"
+# mode = "compare_player1_vs_player2_strategies"
 
 # Choose the maximum number of cards (length) in the dealer and non-dealer strategies
 max_len_strategies = 2
    
+# File path tp save the results of the simulation   
+FILE_PATH = "C:/Users/syoung/Downloads/simulator-results.csv"
 """
 Strategies for dealer vs non-dealer strategies are defined here in lists
 """ 

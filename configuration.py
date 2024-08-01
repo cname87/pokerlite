@@ -28,11 +28,11 @@ OPEN_BET_OPTIONS: dict[str, int] = {
     "M": ANTE_BET * 2, # Open with the medium amount
     "H": ANTE_BET * 5, # Open with the high amount
 }
-# Factors by which an incoming bet is multiplied to give an amount to add to an incoming bet to see or raise a bet
+# Factors by which an incoming bet is multiplied to give an amount to ADD to an incoming bet to see or raise a bet
 SEE_BET_OPTIONS: dict[str, float] = {
     "S": 0, # See the bet => leave at 0 (and any other value is ignored anyway)
-    "M": 0.5, # Medium raise 
-    "H": 1.0, # High raise
+    "M": 1.0, # Medium raise 
+    "H": 3.0, # High raise
 }
 # Number of raises allowed - simulator supports 1 raise maximum
 MAX_RAISES: int = 1 
