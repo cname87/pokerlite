@@ -500,10 +500,18 @@ def outer_strategies_to_be_tested_loop(
     # Only prepare a strategy/results matrix if required                    
     if mode == "compare_dealer_vs_non_dealer_strategies":
         
+        if TIME_DEBUG:
+            start_time = time.time()
+            print("Starting matrix calculations")
+        
         # Calculate the percentage applied by the dealer to each strategy to minimize non-dealer gain and the non-dealer best-case gain (where a positive number represents a gain for the non-dealer)
         dealer_percentage_list, non_dealer_best_gain = calc_optimal_strategy_combo(np.array(results_matrix), "dealer")
         # Calculate the percentage applied by the non-dealer to each strategy to minimize dealer gain and the dealer best-case gain (where a positive number represents a gain for the dealer)
         non_dealer_percentage_list, dealer_best_gain = calc_optimal_strategy_combo(np.array(results_matrix), "non-dealer")
+        
+        if TIME_DEBUG:
+            end_time = time.time()
+            print(f"Time elapsed: {end_time - start_time:.4f} seconds")        
         
         # Add the percentages to the strategies matrix
         for i, percentage in enumerate(non_dealer_percentage_list):
@@ -527,8 +535,18 @@ def outer_strategies_to_be_tested_loop(
             for j, value in enumerate(row):            
                 strategies_matrix[i + 4][j + 4] = value
     
+        if TIME_DEBUG:
+            start_time = time.time()
+            print("Starting download")
+        
         # Download the matrix of strategies and results 
-        download_matrix(strategies_matrix, file_path=FILE_PATH)                       
+        download_matrix(strategies_matrix, file_path=FILE_PATH)
+        
+        if TIME_DEBUG:
+            end_time = time.time()
+            print(f"Time elapsed: {end_time - start_time:.4f} seconds")
+
+         
         # Interrogate the matrix to get and print key data
         get_key_data(FILE_PATH)
     

@@ -21,7 +21,9 @@ mode = "compare_dealer_vs_non_dealer_strategies"
 # mode = "compare_player1_vs_player2_strategies"
 
 # Choose the maximum number of cards (length) in the dealer and non-dealer strategies
-max_len_strategies = 5
+max_len_strategies = 8
+# Choose the limits on each bet type in the strategies
+limits = "448"
 # File path tp save the results of the simulation   
 FILE_PATH = "C:/Users/syoung/Downloads/simulator-results.csv"
 # True to print debug statements in the inner loop
@@ -33,19 +35,19 @@ TIME_DEBUG = True
 Strategies for dealer vs non-dealer strategies are defined here in lists
 """ 
 # Possible strategies for the dealer when the game opens - open high, medium or low, (or check)
-dealer_open_strategy_list: list[dict[int, OpenBetValues]] = generate_possible_lists(max_len_strategies, "HML") # type: ignore
+dealer_open_strategy_list: list[dict[int, OpenBetValues]] = cast(list[dict[int, OpenBetValues]], generate_possible_lists(max_len_strategies, "HML", limits))
 
 # Possible strategies for the dealer when they have checked instead of opening and the non_dealer has opened - raise high or low, see, (or fold)
-dealer_see_or_raise_after_non_dealer_opens_strategy_list: list[dict[int, SeeBetValues]] = cast(list[dict[int, SeeBetValues]], generate_possible_lists(max_len_strategies, "HMS"))
+dealer_see_or_raise_after_non_dealer_opens_strategy_list: list[dict[int, SeeBetValues]] = cast(list[dict[int, SeeBetValues]], generate_possible_lists(max_len_strategies, "HMS", limits))
 
 # Possible strategies for the dealer when the non-dealer raises following a dealer open - see (or fold)
 dealer_see_after_non_dealer_raises_strategy_list: list[dict[int, SeeBetValues]] = cast(list[dict[int, SeeBetValues]], generate_possible_lists(max_len_strategies, "S"))
 
 # Possible strategies for non-dealer when the dealer checks instead of opening - open high, medium or low, (or check)
-non_dealer_open_after_dealer_checks_strategy_list: list[dict[int, OpenBetValues]] = cast(list[dict[int, OpenBetValues]], generate_possible_lists(max_len_strategies, "HML"))
+non_dealer_open_after_dealer_checks_strategy_list: list[dict[int, OpenBetValues]] = cast(list[dict[int, OpenBetValues]], generate_possible_lists(max_len_strategies, "HML", limits))
 
 # Possible strategies for the non-dealer when the dealer opens - raise high or low, see, (or fold)
-non_dealer_see_or_raise_after_dealer_opens_strategy_list: list[dict[int, SeeBetValues]] = cast(list[dict[int, SeeBetValues]], generate_possible_lists(max_len_strategies, "HMS"))
+non_dealer_see_or_raise_after_dealer_opens_strategy_list: list[dict[int, SeeBetValues]] = cast(list[dict[int, SeeBetValues]], generate_possible_lists(max_len_strategies, "HMS", limits))
 
 # Possible strategies for the non-dealer when the dealer raises following a non-dealer open (after dealer check) - see (or fold)
 non_dealer_see_after_dealer_raises_strategy_list: list[dict[int, SeeBetValues]] = cast(list[dict[int, SeeBetValues]], generate_possible_lists(max_len_strategies, "S"))

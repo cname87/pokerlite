@@ -139,11 +139,11 @@ def download_matrix(matrix: list[list[float]], file_path: str) -> None:
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
-def generate_possible_lists(length: int = 5, chars: str = 'HML') -> list[dict[int, str]]:
+def generate_possible_lists(length: int = 5, chars: str = 'HML', limits = "999") -> list[dict[int, str]]:
     
     """
-    Takes a length and a string of characters and generates a list of all possible lists from length 1 to the given length, where each element in each list is one of the characters in the provided string, and where each list is such that the elements only appear in the order that they appear in the provided string. The lists are sorted by length and then by the characters in the provided string.
-    Example: generate_possible_lists(3, 'ABC') returns: [A], [B], [A, A], [A, B], [B, B], [A, A, A], [A, A, B], [A, B, B], [B, B, B] 
+    Takes a length, a string of 3 characters, and a limit string of 3 digits, and generates a list of all possible dictionaries from length 1 to the given length, where each value in each dictionary is one of the characters in the provided string, and where each dictionary is such that the values only appear in the order that they appear in the provided string.  The number of appearances of a character in any dictionary is limited to the digit in the parameter limits that is in the same position as the character . The dictionaries have keys starting from 9 downwards and are sorted by length and then by the characters in the provided string.
+    Example: generate_possible_lists(3, 'ABC', 133) returns: {9: A}, {9: B}, {9: A, 8: B}, {9: B, 8: B}, {9: A, 8: B, 7: B}, {9: B, 8: B, 7: B} 
     
     """
     
@@ -166,24 +166,19 @@ def generate_possible_lists(length: int = 5, chars: str = 'HML') -> list[dict[in
             # Assign the value to the calculated key in the dictionary
             result_dict[key] = value
         return result_dict
-
-    # Use a set so only unique elements are added
+    
+    max_occurrences = [int(limit) for limit in limits]
     all_possible_lists_set: set[tuple[str, ...]] = set()
-    # Loop through lengths from 1 to the given length
-    # Note: 'From 1' means that a zero length list will not be generated so every strategy will have at least one element - the user can always open or see on the highest card
+
     for list_length in range(1, length + 1):
-        # Generate all combinations of the possible characters for the current length
         for combination in product(chars, repeat=list_length):
-            # Sort the combination and convert to a list
-            sorted_combination = sorted(combination, key=lambda x: chars.index(x))
-            # Add the sorted list to the set
-            # Only unique lists will be added due to the set data structure
-            # (Convert to tuple for immutability as a list cannot be added to a set)
-            all_possible_lists_set.add(tuple(sorted_combination))
-    # Convert each tuple back to a list and sort by the custom sort function
-    all_possible_lists = sort_lists_by_order([list(combination) for combination in all_possible_lists_set], chars)	
-    # Convert each list to a dictionary
+            if all(combination.count(char) <= max_occurrences[i] for i, char in enumerate(chars)):
+                sorted_combination = sorted(combination, key=lambda x: chars.index(x))
+                all_possible_lists_set.add(tuple(sorted_combination))
+
+    all_possible_lists = sort_lists_by_order([list(combination) for combination in all_possible_lists_set], chars)
     all_possible_lists_dicts = [tuple_to_dict(combination) for combination in all_possible_lists]
+
     return all_possible_lists_dicts
 
 def get_intersection_value(
