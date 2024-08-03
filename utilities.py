@@ -181,6 +181,12 @@ def generate_possible_lists(length: int = 5, chars: str = 'HML', limits = "999")
 
     return all_possible_lists_dicts
 
+list_dicts = generate_possible_lists(5, "HML", "345")
+
+# for dict_i in list_dicts:
+#    print(f"{dict_i}", end="\n")
+# print(len(list_dicts))
+ 
 def get_intersection_value(
     file_path: str,
     combo1: tuple[dict[int, str], dict[int, str], dict[int, str]],

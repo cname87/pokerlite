@@ -21,9 +21,9 @@ mode = "compare_dealer_vs_non_dealer_strategies"
 # mode = "compare_player1_vs_player2_strategies"
 
 # Choose the maximum number of cards (length) in the dealer and non-dealer strategies
-max_len_strategies = 8
+max_len_strategies = 5
 # Choose the limits on each bet type in the strategies
-limits = "448"
+limits = "888"
 # File path tp save the results of the simulation   
 FILE_PATH = "C:/Users/syoung/Downloads/simulator-results.csv"
 # True to print debug statements in the inner loop
